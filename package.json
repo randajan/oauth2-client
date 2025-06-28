@@ -1,0 +1,54 @@
+{
+  "name": "@randajan/google-auth",
+  "version": "0.0.1",
+  "description": "Lightweight Node.js helper that streamlines OAuth 2.0 and service-account authentication for all Google APIs, giving downstream packages hassle-free token acquisition and refresh",
+  "repository": "randajan/google-auth",
+  "type": "module",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "exports": {
+    ".": {
+      "import": "./dist/esm/index.mjs",
+      "require": "./dist/cjs/index.cjs"
+    }
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@randajan/simple-lib": "^3.2.0",
+    "cors": "^2.8.5",
+    "express": "^5.1.0"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "google-auth",
+    "google-oauth",
+    "google-auth",
+    "oauth2",
+    "authentication",
+    "token",
+    "service-account",
+    "google-auth-library",
+    "nodejs",
+    "wrapper",
+    "library",
+    "sdk"
+  ],
+  "homepage": "https://github.com/randajan/google-auth",
+  "bugs": {
+    "url": "https://github.com/randajan/google-auth/issues"
+  },
+  "author": {
+    "name": "Jan Randa",
+    "email": "jnranda@gmail.com",
+    "url": "https://www.linkedin.com/in/randajan/"
+  },
+  "dependencies": {
+    "@randajan/props": "^0.1.4",
+    "googleapis": "^150.0.1",
+    "mime-types": "^3.0.1"
+  }
+}
