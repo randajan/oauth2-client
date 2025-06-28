@@ -1,5 +1,8 @@
 
+
 const _scopePrefix = "https://www.googleapis.com/auth/";
+export const _defaultScopes = ["openid", "userinfo.profile", "userinfo.email"];
+
 const effaceScope = (scope, full=false)=>{
     scope = String(scope).replace(/[\s\n\r]+/g, " ").trim().toLowerCase();
     if (scope === "openid") { return scope; }

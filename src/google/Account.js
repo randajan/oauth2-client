@@ -3,7 +3,7 @@ import { vault } from "../consts";
 import { solids } from "@randajan/props";
 import { effaceScopes } from "./scopes";
 
-export class OAuthAccount {
+export class GoogleAccount {
 
     constructor(client, credentials) {
 

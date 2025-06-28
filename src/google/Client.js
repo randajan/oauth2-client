@@ -1,12 +1,9 @@
 import { google } from "googleapis";
 import { vault } from "../consts";
-import { effaceScopes } from "./scopes";
-import { OAuthAccount } from "./Account";
+import { _defaultScopes, effaceScopes } from "./scopes";
+import { GoogleAccount } from "./Account";
 import { extendURL, fromBase64, isValidURL, toBase64, validateFn, validateURL } from "../tools";
 import { RedirectError } from "../errors";
-
-
-const _defaultScopes = ["openid", "userinfo.profile", "userinfo.email"];
 
 
 //add to options:
@@ -21,7 +18,7 @@ const _defaultScopes = ["openid", "userinfo.profile", "userinfo.email"];
 // onRenew - tokens auto refresh, should store at db, no return expects
 // extra - will be passed to google.auth.OAuth2(...)
 
-export class OAuthClient {
+export class GoogleOAuth2 {
 
     constructor(options = {}) {
         const { isOffline, scopes, clientId, clientSecret, redirectUri, landingUri, fallbackUri, onAuth, onRenew, extra } = options;
@@ -55,7 +52,7 @@ export class OAuthClient {
     }
 
     account(credentials) {
-        return new OAuthAccount(this, credentials);
+        return new GoogleAccount(this, credentials);
     }
 
     _getInitAuthURL(landingUri, scopes=[], options={}) {
