@@ -17,7 +17,7 @@ const oauth = new GoogleOAuth2({
         "drive"
     ],
     onAuth:async (account)=>{
-        console.log(await account.tokens());
+        console.log(await account.getUID());
     },
     onRenew:(account)=>{
 

@@ -23,6 +23,11 @@ export class GoogleAccount {
         return google.oauth2({ auth: this.auth, version: 'v2' });
     }
 
+    async uid() {
+        const { id } = await this.profile();
+        return `google:${id}`;
+    }
+
     async profile() {
         const { data } = await this.oauth2().userinfo.get();
         return data;
