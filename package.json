@@ -1,6 +1,6 @@
 {
   "name": "@randajan/oauth2-client",
-  "version": "0.0.2",
+  "version": "0.1.0",
   "description": "Lightweight Node.js helper that streamlines OAuth 2.0 and service-account authentication for all Google APIs, giving downstream packages hassle-free token acquisition and refresh",
   "repository": "randajan/oauth2-client",
   "type": "module",
