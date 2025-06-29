@@ -76,7 +76,7 @@ export class GoogleOAuth2 {
         catch(err) { return this._fallbackRedirect(1, err);}
     }
 
-    async _getExitAuthURL(code, state) {
+    async _getExitAuthURL({code, state}, context) {
         const _p = vault.get(this);
 
         if (!code) { throw new RedirectError(201, "Bad request. Missing 'code'"); }
@@ -86,14 +86,14 @@ export class GoogleOAuth2 {
 
         const { tokens } = await _p.auth.getToken(code);
         const account = this.account(tokens);
-        const missingScopes = await _p.onAuth(account);
+        const missingScopes = await _p.onAuth(account, context);
         if (!missingScopes?.length) { return landingUri; }
 
         return this.getInitAuthURL(landingUri, missingScopes);
     }
 
-    getExitAuthURL(code, state) {
-        try { return this._getExitAuthURL(code, state); }
+    getExitAuthURL({code, state}, context) {
+        try { return this._getExitAuthURL({ code, state }, context); }
         catch(err) { return this._fallbackRedirect(2, err);}
     }
 

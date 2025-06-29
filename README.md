@@ -40,7 +40,7 @@ const google = new GoogleOAuth2({
   fallbackUri:       "http://localhost:3000/login/error",    // front‑end error screen
   scopes:            ["drive"],                              // extra scopes
   isOffline:         true,                                   // ask for refresh_token
-  onAuth: async account => {
+  onAuth: async (account, context) => {
     // first time we see this user
     console.log("new account", await account.uid());
     // store tokens somewhere safe …
@@ -104,7 +104,7 @@ import { GoogleOAuth2 } from "@randajan/oauth2-client/google";
 |--------|---------|-------------|
 | `constructor(options)` | `GoogleOAuth2` | Creates a new client. See **options** above |
 | `getInitAuthURL(landingUri?, scopes?, generateOptions?)` | `string` | Generates the consent‑screen URL. Parameters override the defaults from the constructor |
-| `getExitAuthURL(code, state)` | `Promise<string>` | Exchanges `code` for tokens, triggers `onAuth`, then returns a redirect URL (either `landingUri` or a new **init** URL if more scopes are needed) |
+| `getExitAuthURL({code, state}, context)` | `Promise<string>` | Exchanges `code` for tokens, triggers `onAuth`, then returns a redirect URL (either `landingUri` or a new **init** URL if more scopes are needed). Context will be passed as second argument to `onAuth` trait |
 | `account(credentials)` | `GoogleAccount` | Converts raw token `credentials` into a handy account object |
 
 ### Class **`GoogleAccount`**

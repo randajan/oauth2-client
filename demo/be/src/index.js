@@ -16,8 +16,9 @@ const oauth = new GoogleOAuth2({
     scopes:[
         "drive"
     ],
-    onAuth:async (account)=>{
-        console.log(await account.getUID());
+    onAuth:async (account, context)=>{
+        const { req, res } = context;
+        console.log(await account.uid(), req.query);
     },
     onRenew:(account)=>{
 
@@ -41,7 +42,7 @@ app.get("/oauth/init", (req, res)=>{
 
 app.get("/oauth/exit", async (req, res)=> {
     const { query } = req;
-    const redirect = await oauth.getExitAuthURL(query.code, query.state);
+    const redirect = await oauth.getExitAuthURL(query, { req, res });
     res.redirect(redirect);
 });
 
