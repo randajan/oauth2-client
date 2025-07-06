@@ -84,7 +84,7 @@ Every concrete OAuth2 client (Google, Microsoft …​) accepts the same constr
 | `landingUri` | `string (URL)` |   | Default front‑end page after successful login (may be overridden per request) |
 | `scopes` | `string \| string[]` |   | Extra scopes. Google is always invoked with `openid userinfo.profile userinfo.email` |
 | `isOffline` | `boolean` |   | When `true` requests `access_type=offline` so a `refresh_token` is issued |
-| `onAuth` | `(account) => Promise<string[] \| void>` | ✔︎ | Called once after new account is created. Return **missing scopes** to immediately restart the flow |
+| `onAuth` | `(account) => Promise<string[] \| void>` | ✔︎ | Called once after new account is created. Return uri (string) for custom redirect |
 | `onRenew` | `(account) => void` | ✔︎ | Called whenever the access‑token is automatically refreshed |
 | `extra` | `object` |   | Arbitrary options forwarded to the underlying SDK |
 

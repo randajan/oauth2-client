@@ -14,7 +14,7 @@ import { RedirectError } from "../errors";
 // redirectUri - backend code resolve URL
 // landingUri - frontend ok redirect URL
 // fallbackUri - error handling redirect will be used with query.errorCode && query.errorMessage
-// onAuth - register new account, can return missing scopes by account
+// onAuth - register new account, can return customUri redirect
 // onRenew - tokens auto refresh, should store at db, no return expects
 // extra - will be passed to google.auth.OAuth2(...)
 
@@ -86,10 +86,8 @@ export class GoogleOAuth2 {
 
         const { tokens } = await _p.auth.getToken(code);
         const account = this.account(tokens);
-        const missingScopes = await _p.onAuth(account, context);
-        if (!missingScopes?.length) { return landingUri; }
-
-        return this.getInitAuthURL(landingUri, missingScopes);
+        const customUri = await _p.onAuth(account, context);
+        return customUri || landingUri;
     }
 
     getExitAuthURL({code, state}, context) {
