@@ -2,7 +2,7 @@ import { google } from "googleapis";
 import { vault } from "../consts";
 import { _defaultScopes, effaceScopes } from "./scopes";
 import { GoogleAccount } from "./Account";
-import { extendURL, fromBase64, isValidURL, toBase64, validateFn, validateURL } from "../tools";
+import { extendURL, isValidURL, objFromBase64, objToBase64, validateFn, validateURL } from "../tools";
 import { RedirectError } from "../errors";
 
 
@@ -62,24 +62,25 @@ export class GoogleOAuth2 {
         return (c instanceof Promise) ? c.then(cr=>new GoogleAccount(this, cr)) : new GoogleAccount(this, c);
     }
 
-    _getInitAuthURL(landingUri, scopes=[], options={}) {
+    _getInitAuthURL(options={}) {
         const _p = vault.get(this);
+        const { landingUri, state, scopes, extra } = options;
 
         if ((landingUri || !_p.landingUri) && !isValidURL(landingUri)) {
             throw new RedirectError(1, "Bad request. Missing valid 'landingUri'");
         }
 
         return _p.auth.generateAuthUrl({
-            ...options,
+            ...(extra || {}),
             access_type: _p.isOffline ? "offline" : "online",
             scope: effaceScopes(scopes, true, _p.defaultScopes),
-            state: toBase64(landingUri || _p.landingUri)
+            state: objToBase64([ landingUri || _p.landingUri, state ])
         });
 
     }
 
-    getInitAuthURL(landingUri, scopes=[], options={}) {
-        try { return this._getInitAuthURL(landingUri, scopes, options); }
+    getInitAuthURL(options={}) {
+        try { return this._getInitAuthURL(options); }
         catch(err) { return this._fallbackRedirect(1, err);}
     }
 
@@ -88,12 +89,13 @@ export class GoogleOAuth2 {
 
         if (!code) { throw new RedirectError(201, "Bad request. Missing 'code'"); }
 
-        const landingUri = fromBase64(state);
+        const [ landingUri, passedState ] = objFromBase64(state);
         if (!isValidURL(landingUri)) { throw new RedirectError(202, "Bad request. Missing valid 'state'"); }
 
         const { tokens } = await _p.auth.getToken(code);
         const account = new GoogleAccount(this, tokens);
-        const customUri = await _p.onAuth(account, context);
+        
+        const customUri = await _p.onAuth(account, { context, state:passedState });
         return customUri || landingUri;
     }
 

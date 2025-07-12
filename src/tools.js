@@ -37,5 +37,8 @@ export const validateFn = (required, fn, errProp)=>{
 }
 
 
-export const toBase64 = plain=>Buffer.from(plain, 'utf8').toString('base64');
-export const fromBase64 = encoded=>Buffer.from(encoded, 'base64').toString('utf8');
+export const strToBase64 = str=>Buffer.from(str, 'utf8').toString('base64');
+export const strFromBase64 = strEncoded=>Buffer.from(strEncoded, 'base64').toString('utf8');
+
+export const objToBase64 = obj=>strToBase64(JSON.stringify(obj));
+export const objFromBase64 = objEncoded=>JSON.parse(strFromBase64(objEncoded));

@@ -84,7 +84,7 @@ Every concrete OAuth2 client (Google, Microsoft …​) accepts the same constr
 | `landingUri` | `string (URL)` |   | Default front‑end page after successful login (may be overridden per request) |
 | `scopes` | `string \| string[]` |   | Extra scopes. Google is always invoked with `openid userinfo.profile userinfo.email` |
 | `isOffline` | `boolean` |   | When `true` requests `access_type=offline` so a `refresh_token` is issued |
-| `onAuth` | `(account) => Promise<string[] \| void>` | ✔︎ | Called once after new account is created. Return uri (string) for custom redirect |
+| `onAuth` | `(account, { context, state }) => Promise<string[] \| void>` | ✔︎ | Called once after new account is created. Return uri (string) for custom redirect |
 | `onRenew` | `(account) => void` | ✔︎ | Called whenever the access‑token is automatically refreshed |
 | `getCredentials` | `(userId)`=>object | Promise<object> | | Called inside oauth.account(...), all arguments will be passed. If this trait returns Promise oauth.account(...) will also return Promise.
 | `extra` | `object` |   | Arbitrary options forwarded to the underlying SDK |
@@ -104,7 +104,7 @@ import { GoogleOAuth2 } from "@randajan/oauth2-client/google";
 | Member | Returns | Description |
 |--------|---------|-------------|
 | `constructor(options)` | `GoogleOAuth2` | Creates a new client. See **options** above |
-| `getInitAuthURL(landingUri?, scopes?, generateOptions?)` | `string` | Generates the consent‑screen URL. Parameters override the defaults from the constructor |
+| `getInitAuthURL({ landingUri?, scopes?, state?, extra? })` | `string` | Generates the consent‑screen URL. Parameters override the defaults from the constructor |
 | `getExitAuthURL({code, state}, context)` | `Promise<string>` | Exchanges `code` for tokens, triggers `onAuth`, then returns a redirect URL (either `landingUri` or a new **init** URL if more scopes are needed). Context will be passed as second argument to `onAuth` trait |
 | `account(credentials, ...args)` | `GoogleAccount` | Converts raw token `credentials` into a handy account object. getCredentials(credentials, ...args) trait will be used if was provided into the options |
 

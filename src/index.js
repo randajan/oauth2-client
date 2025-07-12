@@ -1,5 +1,1 @@
-import { extendURL } from "./tools";
-
-export {
-    extendURL
-}
+export * from "./tools";

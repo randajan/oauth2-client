@@ -16,9 +16,9 @@ const oauth = new GoogleOAuth2({
     scopes:[
         "drive"
     ],
-    onAuth:async (account, context)=>{
+    onAuth:async (account, { context, state })=>{
         const { req, res } = context;
-        console.log(await account.tokens(), );
+        console.log(state, await account.uid());
     },
     onRenew:(account)=>{
 
@@ -29,8 +29,6 @@ const oauth = new GoogleOAuth2({
     ...env
 });
 
-const acc = oauth.account().then(acc=>acc.tokens()).then(console.log);
-
 const app = express();
 const PORT = 3999;
 
@@ -40,7 +38,7 @@ app.use(cors());
 
 app.get("/oauth/init", (req, res)=>{
     const { query } = req;
-    const url = oauth.getInitAuthURL(query.landingUri);
+    const url = oauth.getInitAuthURL({ state:query.state });
     res.redirect(url);
 });
 
