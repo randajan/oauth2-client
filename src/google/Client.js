@@ -95,7 +95,7 @@ export class GoogleOAuth2 {
         const { tokens } = await _p.auth.getToken(code);
         const account = new GoogleAccount(this, tokens);
         
-        const customUri = await _p.onAuth(account, { context, state:passedState });
+        const customUri = await _p.onAuth(account, { context, landingUri, state:passedState });
         return customUri || landingUri;
     }
 
