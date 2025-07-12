@@ -1,4 +1,3 @@
-import { URL } from "url";
 
 export const sliceMap = (arr, size, callback) => {
     size = Math.max(1, size) || 1;
