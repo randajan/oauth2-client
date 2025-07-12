@@ -5,7 +5,17 @@ import { effaceScopes } from "./scopes";
 
 export class GoogleAccount {
 
-    constructor(client, credentials) {
+    constructor(client, credentials={}) {
+
+        const { access_token, refresh_token, expiry_date } = credentials;
+
+        if (refresh_token && !expiry_date) {
+            throw new Error(`OAuth2 account credentials 'refresh_token' must be provided with 'expiry_date'`);
+        }
+
+        if (!access_token && !refresh_token) {
+            throw new Error(`OAuth2 account credentials 'access_token' of 'refresh_token' must be provided`);
+        }
 
         const { createAuth, onRenew } = vault.get(client);
 

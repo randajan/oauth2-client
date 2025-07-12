@@ -41,9 +41,9 @@
     "library",
     "sdk"
   ],
-  "homepage": "https://github.com/randajan/google-auth",
+  "homepage": "https://github.com/randajan/oauth2-client",
   "bugs": {
-    "url": "https://github.com/randajan/google-auth/issues"
+    "url": "https://github.com/randajan/oauth2-client/issues"
   },
   "author": {
     "name": "Jan Randa",

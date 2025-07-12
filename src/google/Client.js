@@ -21,7 +21,11 @@ import { RedirectError } from "../errors";
 export class GoogleOAuth2 {
 
     constructor(options = {}) {
-        const { isOffline, scopes, clientId, clientSecret, redirectUri, landingUri, fallbackUri, onAuth, onRenew, extra } = options;
+        const {
+            isOffline, scopes, clientId, clientSecret,
+            redirectUri, landingUri, fallbackUri,
+            onAuth, onRenew, getCredentials, extra
+        } = options;
 
         const _p = { };
 
@@ -32,6 +36,7 @@ export class GoogleOAuth2 {
 
         _p.onAuth = validateFn(true, onAuth, "options.onAuth");
         _p.onRenew = validateFn(true, onRenew, "options.onRenew");
+        _p.getCredentials = validateFn(false, getCredentials, "options.getCredentials");
 
         const commonOptions = {
             ...(extra || {}),
@@ -51,8 +56,10 @@ export class GoogleOAuth2 {
         vault.set(this, _p);
     }
 
-    account(credentials) {
-        return new GoogleAccount(this, credentials);
+    account(credentials, ...args) {
+        const { getCredentials } = vault.get(this);
+        const c = getCredentials ? getCredentials(credentials, ...args) : credentials;
+        return (c instanceof Promise) ? c.then(cr=>new GoogleAccount(this, cr)) : new GoogleAccount(this, c);
     }
 
     _getInitAuthURL(landingUri, scopes=[], options={}) {
@@ -85,7 +92,7 @@ export class GoogleOAuth2 {
         if (!isValidURL(landingUri)) { throw new RedirectError(202, "Bad request. Missing valid 'state'"); }
 
         const { tokens } = await _p.auth.getToken(code);
-        const account = this.account(tokens);
+        const account = new GoogleAccount(this, tokens);
         const customUri = await _p.onAuth(account, context);
         return customUri || landingUri;
     }

@@ -18,13 +18,18 @@ const oauth = new GoogleOAuth2({
     ],
     onAuth:async (account, context)=>{
         const { req, res } = context;
-        console.log(await account.uid(), req.query);
+        console.log(await account.tokens(), );
     },
     onRenew:(account)=>{
 
     },
+    getCredentials:async ()=>{
+        return env.tokens;
+    },
     ...env
 });
+
+const acc = oauth.account().then(acc=>acc.tokens()).then(console.log);
 
 const app = express();
 const PORT = 3999;
