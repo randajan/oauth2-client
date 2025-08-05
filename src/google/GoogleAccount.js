@@ -11,20 +11,10 @@ export class GoogleAccount extends OAuth2Account {
     constructor(client, credentials={}) {
         super(client, credentials);
 
-        const { access_token, refresh_token, expiry_date } = credentials;
-
-        if (refresh_token && !expiry_date) {
-            throw new Error(`OAuth2 account credentials 'refresh_token' must be provided with 'expiry_date'`);
-        }
-
-        if (!access_token && !refresh_token) {
-            throw new Error(`OAuth2 account credentials 'access_token' of 'refresh_token' must be provided`);
-        }
-
         const grant = vault.get(client);
 
         const auth = grant.createAuth();
-        auth.setCredentials(credentials);
+        auth.setCredentials(this.credentials);
         auth.on('tokens', _=>{ grant.onRenew(this); });
 
         solids(this, {

@@ -5,7 +5,7 @@ const { isServer, isBuild } = argv;
 slib(
     isBuild,
     {
-        rebuildBuffer:isServer ? 500 : 100,
+        rebuildBuffer:isServer ? 1000 : 100,
         mode:isServer ? "node" : "web",
         demo:{
             dir: isServer ? "demo/be" : "demo/fe",
@@ -17,7 +17,8 @@ slib(
             entries:[
                 "index.js",
                 "google/index.js",
-                "facebook/index.js"
+                "facebook/index.js",
+                "seznam/index.js"
             ]
         },
     }

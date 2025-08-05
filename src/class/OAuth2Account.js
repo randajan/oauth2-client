@@ -1,5 +1,6 @@
 import { solids } from "@randajan/props";
 import { vault } from "../consts";
+import { formatCredentials } from "../tools";
 
 
 
@@ -7,8 +8,12 @@ import { vault } from "../consts";
 export class OAuth2Account {
 
     constructor(client, credentials={}) {
+
+        credentials = formatCredentials(credentials);
+
         solids(this, {
             client,
+            credentials
         }, false);
     }
 

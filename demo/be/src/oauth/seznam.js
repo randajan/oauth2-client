@@ -1,15 +1,11 @@
-import googleOAuth2 from "../../../../dist/esm/google/index.mjs";
+import seznamOAuth2 from "../../../../dist/esm/seznam/index.mjs";
 import { env } from "../env";
 
 
-export default googleOAuth2({
-    uidKey: "email",
-    isOffline: true,
+export default seznamOAuth2({
+    uidKey: "id",
     landingUri: "http://localhost:3000",
     fallbackUri: "http://localhost:3000",
-    scopes: [
-        "drive"
-    ],
     onAuth: async (account, { context, state }) => {
         const { req, res } = context;
         console.log(state, await account.profile());
@@ -17,8 +13,5 @@ export default googleOAuth2({
     onRenew: (account) => {
 
     },
-    getCredentials: async () => {
-        return env.google.tokens;
-    },
-    ...env.google
+    ...env.seznam
 });

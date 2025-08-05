@@ -1,5 +1,6 @@
 import { RedirectError } from "../errors";
 import { extendURL, isValidURL, objFromBase64, objToBase64, validateFn, validateURL } from "../tools";
+import { OAuth2Account } from "./OAuth2Account";
 
 export class OAuth2Grant {
 
@@ -8,6 +9,7 @@ export class OAuth2Grant {
     static scopePrefix="";
     static scopesCommon=[];
     static scopesNoPrefix=[];
+    static Account = OAuth2Account;
 
     constructor(client, opt={}) {
         const { name, uidKey, scopesCommon } = this.constructor;
@@ -19,7 +21,6 @@ export class OAuth2Grant {
         this.isOffline = !!opt.isOffline;
         this.clientId = opt.clientId;
         this.clientSecret = opt.clientSecret;
-        
 
         this.redirectUri = validateURL(true, opt.redirectUri, "options.redirectUri");
         this.fallbackUri = validateURL(true, opt.fallbackUri, "options.fallbackUri");
@@ -34,8 +35,7 @@ export class OAuth2Grant {
     }
 
     createAccount(credentials) {
-        const { client } = this;
-        const { Account } = client.constructor;
+        const { client, constructor:{ Account } } = this;
         return new Account(client, credentials);
     }
 

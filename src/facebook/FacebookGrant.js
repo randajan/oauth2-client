@@ -2,6 +2,7 @@ import fetch from "node-fetch";
 import { OAuth2Grant } from "../class/OAuth2Grant";
 import { extendURL, validateStr } from "../tools";
 import { RedirectError } from "../errors";
+import { FacebookAccount } from "./FacebookAccount";
 
 
 
@@ -12,6 +13,7 @@ export class FacebookGrant extends OAuth2Grant {
     static scopePrefix = "";
     static scopesCommon = [];
     static scopesNoPrefix = [];
+    static Account = FacebookAccount;
 
     constructor(client, opt = {}) {
         super(client, opt);
@@ -19,38 +21,44 @@ export class FacebookGrant extends OAuth2Grant {
         this.apiVersion = validateStr(true, opt.apiVersion, "options.apiVersion");
     }
 
-    generateAuthUrl(scope, state, extra) {
-        const { apiVersion, clientId, redirectUri } = this;
-
+    createApiUrl(subdomain, path, query={}) {
+        const { apiVersion } = this;
         return extendURL(
-            `https://www.facebook.com/${apiVersion}/dialog/oauth`,
-            {
-                ...extra,
-                response_type: "code",
-                client_id: clientId,
-                redirect_uri: redirectUri,
-                scope: scope.join(","),                 // FB odděluje čárkou
-                state
-            }
+            `https://${subdomain}.facebook.com/${apiVersion}${path}`,
+            query
         );
     }
 
-    async swapCodeForTokens(code) {
-        const { clientId, clientSecret, redirectUri, apiVersion } = this;
-
-        const url = extendURL(
-            `https://graph.facebook.com/${apiVersion}/oauth/access_token`,
-            {
-                client_id: clientId,
-                client_secret: clientSecret,
-                redirect_uri: redirectUri,
-                code
-            }
-        );
-
+    async fetchApi(path, query, errorCode = 2) {
+        const url = this.createApiUrl("graph", path, query);
         const res = await fetch(url);
-        if (!res.ok) { throw new RedirectError(2, await res.text()); }
+        if (!res.ok) { throw new RedirectError(errorCode, await res.text()); }
         return res.json();
+    }
+
+    generateAuthUrl(scope, state, extra) {
+        const { clientId, redirectUri } = this;
+
+        return this.createApiUrl("www", `/dialog/oauth`, {
+            ...extra,
+            response_type: "code",
+            client_id: clientId,
+            redirect_uri: redirectUri,
+            scope: scope.join(","),                 // FB odděluje čárkou
+            state
+        });
+    }
+
+    async swapCodeForTokens(code) {
+        const { clientId, clientSecret, redirectUri } = this;
+
+        return this.fetchApi(`/oauth/access_token`, {
+            client_id: clientId,
+            client_secret: clientSecret,
+            redirect_uri: redirectUri,
+            code
+        });
+
     }
 
 }

@@ -1,5 +1,6 @@
 import { google } from "googleapis";
 import { OAuth2Grant } from "../class/OAuth2Grant";
+import { GoogleAccount } from "./GoogleAccount";
 
 export class GoogleGrant extends OAuth2Grant {
 
@@ -8,6 +9,7 @@ export class GoogleGrant extends OAuth2Grant {
     static scopePrefix="https://www.googleapis.com/auth/";
     static scopesCommon=["openid", "userinfo.profile", "userinfo.email"];
     static scopesNoPrefix=["openid"];
+    static Account = GoogleAccount;
 
     constructor(client, opt={}) {
         super(client, opt);

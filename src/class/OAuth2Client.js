@@ -1,17 +1,10 @@
 import { vault } from "../consts";
 import { virtuals } from "@randajan/props";
-import { OAuth2Grant } from "./OAuth2Grant";
-import { OAuth2Account } from "./OAuth2Account";
 
 
 export class OAuth2Client {
 
-    static Grant = OAuth2Grant;
-    static Account = OAuth2Account;
-
-    constructor(options={}) {
-
-        const { Grant } = this.constructor;
+    constructor(Grant, options={}) {
         const grant = new Grant(this, options);
 
         virtuals(this, {
