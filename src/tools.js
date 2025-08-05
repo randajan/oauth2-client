@@ -35,6 +35,12 @@ export const validateFn = (required, fn, errProp)=>{
     throw new Error(`${errProp} is not a valid function`);
 }
 
+export const validateStr = (required, str, errProp)=>{
+    if (!str && !required) { return; }
+    if (typeof str === "string") { return str; }
+    throw new Error(`${errProp} is not a valid string`);
+}
+
 
 export const strToBase64 = str=>Buffer.from(str, 'utf8').toString('base64');
 export const strFromBase64 = strEncoded=>Buffer.from(strEncoded, 'base64').toString('utf8');

@@ -1,13 +1,10 @@
 
-import { effaceScopes } from "./scopes";
-import { GoogleOAuth2 } from "./Client";
-import { GoogleAccount } from "./Account";
+import { GoogleClient } from "./GoogleClient";
+import { GoogleAccount } from "./GoogleAccount";
+import { GoogleGrant } from "./GoogleGrant";
 
 export {
-    GoogleOAuth2,
-    GoogleAccount
-}
-
-export {
-    effaceScopes,
+    GoogleClient,
+    GoogleAccount,
+    GoogleGrant
 }

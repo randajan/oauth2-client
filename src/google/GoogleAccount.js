@@ -1,11 +1,15 @@
 import { google } from "googleapis";
-import { vault } from "../consts";
 import { solids } from "@randajan/props";
-import { effaceScopes } from "./scopes";
 
-export class GoogleAccount {
+import { OAuth2Account } from "../class/OAuth2Account";
+import { vault } from "../consts";
+
+
+
+export class GoogleAccount extends OAuth2Account {
 
     constructor(client, credentials={}) {
+        super(client, credentials);
 
         const { access_token, refresh_token, expiry_date } = credentials;
 
@@ -17,25 +21,20 @@ export class GoogleAccount {
             throw new Error(`OAuth2 account credentials 'access_token' of 'refresh_token' must be provided`);
         }
 
-        const { createAuth, onRenew } = vault.get(client);
+        const grant = vault.get(client);
 
-        const auth = createAuth();
+        const auth = grant.createAuth();
         auth.setCredentials(credentials);
-        auth.on('tokens', _=>{ onRenew(this); });
+        auth.on('tokens', _=>{ grant.onRenew(this); });
 
         solids(this, {
-            client,
             auth,
         });
+
     }
 
     oauth2() {
         return google.oauth2({ auth: this.auth, version: 'v2' });
-    }
-
-    async uid() {
-        const { id } = await this.profile();
-        return `google:${id}`;
     }
 
     async profile() {
@@ -45,16 +44,13 @@ export class GoogleAccount {
 
     async tokens() {
         const { token } = await this.auth.getAccessToken();
-
         return { ...this.auth.credentials, access_token: token };
     }
 
     async scopes() {
         const { auth } = this;
-
-        if (auth.credentials?.scope) {
-            return effaceScopes(auth.credentials.scope);
-        }
+        
+        if (auth.credentials?.scope) { return super.scopes(auth.credentials.scope); }
 
         const { token } = await auth.getAccessToken();
         if (!token) { return []; }
@@ -62,7 +58,7 @@ export class GoogleAccount {
         const info = await auth.getTokenInfo(token);
         if (!info) { return []; }
 
-        return effaceScopes(info.scopes);
+        return super.scopes(info.scopes);
     }
 
 }

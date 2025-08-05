@@ -17,6 +17,7 @@ slib(
             entries:[
                 "index.js",
                 "google/index.js",
+                "facebook/index.js"
             ]
         },
     }
