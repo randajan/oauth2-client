@@ -18,6 +18,10 @@
     "./facebook": {
       "import": "./dist/esm/facebook/index.mjs",
       "require": "./dist/cjs/facebook/index.cjs"
+    },
+    "./seznam": {
+      "import": "./dist/esm/seznam/index.mjs",
+      "require": "./dist/cjs/seznam/index.cjs"
     }
   },
   "license": "MIT",
