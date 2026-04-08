@@ -5,7 +5,7 @@ import { formatCredentials } from "../tools";
 
 
 
-export class OAuth2Account {
+export class Account {
 
     constructor(client, credentials={}) {
 
@@ -34,6 +34,9 @@ export class OAuth2Account {
 
     async scopes(scopes) {
         const grant = vault.get(this.client);
+
+        if (typeof grant.effaceScopes !== "function") { return []; }
+
         return grant.effaceScopes(scopes);
     }
 

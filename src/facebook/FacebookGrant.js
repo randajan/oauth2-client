@@ -1,12 +1,12 @@
 import fetch from "node-fetch";
-import { OAuth2Grant } from "../class/OAuth2Grant";
+import { ScopeGrant } from "../class/ScopeGrant";
 import { extendURL, validateStr } from "../tools";
 import { RedirectError } from "../errors";
 import { FacebookAccount } from "./FacebookAccount";
 
 
 
-export class FacebookGrant extends OAuth2Grant {
+export class FacebookGrant extends ScopeGrant {
 
     static name = "facebook";
     static uidKey = "id";
@@ -18,7 +18,7 @@ export class FacebookGrant extends OAuth2Grant {
     constructor(client, opt = {}) {
         super(client, opt);
 
-        this.apiVersion = validateStr(true, opt.apiVersion, "options.apiVersion");
+        this.apiVersion = validateStr(false, opt.apiVersion, "options.apiVersion") || "v23.0";
     }
 
     createApiUrl(subdomain, path, query={}) {

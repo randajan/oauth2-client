@@ -22,6 +22,10 @@
     "./seznam": {
       "import": "./dist/esm/seznam/index.mjs",
       "require": "./dist/cjs/seznam/index.cjs"
+    },
+    "./magic": {
+      "import": "./dist/esm/magic/index.mjs",
+      "require": "./dist/cjs/magic/index.cjs"
     }
   },
   "license": "MIT",

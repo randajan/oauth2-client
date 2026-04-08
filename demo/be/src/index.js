@@ -4,11 +4,13 @@ import express from 'express';
 import cors from "cors";
 import facebook from "./oauth/facebook";
 import google from "./oauth/google";
+import magic from "./oauth/magic";
 import seznam from "./oauth/seznam";
 
 const oauthClients = {
     facebook,
     google,
+    magic,
     seznam
 }
 
@@ -17,11 +19,14 @@ const PORT = 3999;
 
 app.use(cors());
 
-app.get("/oauth/:grant/init", (req, res)=>{
+app.get("/oauth/:grant/init", async (req, res)=>{
     const { query, params } = req;
     const oauth = oauthClients[params.grant];
     if (!oauth) { res.sendStatus(404); return; }
-    const url = oauth.getInitAuthURL({ state:query.state });
+    const url = await oauth.getInitAuthURL({
+        state:query.state,
+        userId:query.userId
+    });
     res.redirect(url);
 });
 

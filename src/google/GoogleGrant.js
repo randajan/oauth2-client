@@ -1,8 +1,8 @@
 import { google } from "googleapis";
-import { OAuth2Grant } from "../class/OAuth2Grant";
+import { ScopeGrant } from "../class/ScopeGrant";
 import { GoogleAccount } from "./GoogleAccount";
 
-export class GoogleGrant extends OAuth2Grant {
+export class GoogleGrant extends ScopeGrant {
 
     static name="google";
     static uidKey="id";

@@ -1,8 +1,8 @@
-import { OAuth2Account } from "../class/OAuth2Account";
+import { Account } from "../class/Account";
 import { vault } from "../consts";
 
 
-export class FacebookAccount extends OAuth2Account {
+export class FacebookAccount extends Account {
 
     async profile(fields = ["id", "name", "email", "picture"]) {
         const grant = vault.get(this.client);

@@ -1,12 +1,12 @@
 import { google } from "googleapis";
 import { solids } from "@randajan/props";
 
-import { OAuth2Account } from "../class/OAuth2Account";
+import { Account } from "../class/Account";
 import { vault } from "../consts";
 
 
 
-export class GoogleAccount extends OAuth2Account {
+export class GoogleAccount extends Account {
 
     constructor(client, credentials={}) {
         super(client, credentials);

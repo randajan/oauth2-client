@@ -2,7 +2,7 @@ import { vault } from "../consts";
 import { virtuals } from "@randajan/props";
 
 
-export class OAuth2Client {
+export class Client {
 
     constructor(Grant, options={}) {
         const grant = new Grant(this, options);
@@ -21,15 +21,15 @@ export class OAuth2Client {
         return (c instanceof Promise) ? c.then(cr => grant.createAccount(cr)) : grant.createAccount(c);
     }
 
-    getInitAuthURL(options = {}) {
+    async getInitAuthURL(options = {}) {
         const grant = vault.get(this);
-        try { return grant.getInitAuthURL(options); }
+        try { return await grant.getInitAuthURL(options); }
         catch (err) { return grant.fallbackRedirect(1, err); }
     }
 
-    getExitAuthURL({ code, state }, context) {
+    async getExitAuthURL({ code, state }, context) {
         const grant = vault.get(this);
-        try { return grant.getExitAuthURL({ code, state }, context); }
+        try { return await grant.getExitAuthURL({ code, state }, context); }
         catch (err) { return grant.fallbackRedirect(2, err); }
     }
 

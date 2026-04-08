@@ -1,12 +1,12 @@
 import { google } from "googleapis";
 import { solids } from "@randajan/props";
 
-import { OAuth2Account } from "../class/OAuth2Account";
+import { Account } from "../class/Account";
 import { vault } from "../consts";
 
 
 
-export class SeznamAccount extends OAuth2Account {
+export class SeznamAccount extends Account {
 
     async profile() {
         const grant = vault.get(this.client);

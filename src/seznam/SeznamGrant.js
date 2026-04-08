@@ -1,11 +1,11 @@
 // SeznamGrant.js
 import fetch from "node-fetch";
-import { OAuth2Grant } from "../class/OAuth2Grant";
+import { ScopeGrant } from "../class/ScopeGrant";
 import { extendURL } from "../tools";
 import { RedirectError } from "../errors";
 import { SeznamAccount } from "./SeznamAccount";
 
-export class SeznamGrant extends OAuth2Grant {
+export class SeznamGrant extends ScopeGrant {
 
     static name = "seznam";
     static uidKey = "email";
@@ -68,3 +68,4 @@ export class SeznamGrant extends OAuth2Grant {
 
     }
 }
+

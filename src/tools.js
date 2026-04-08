@@ -64,5 +64,19 @@ export const formatCredentials = (credentials={}) => {
 export const strToBase64 = str => Buffer.from(str, 'utf8').toString('base64');
 export const strFromBase64 = strEncoded => Buffer.from(strEncoded, 'base64').toString('utf8');
 
+export const base64ToBase64Url = str => String(str || "")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/g, "");
+
+export const base64UrlToBase64 = str => {
+    const b64 = String(str || "").replace(/-/g, "+").replace(/_/g, "/");
+    const padding = (4 - (b64.length % 4)) % 4;
+    return `${b64}${"=".repeat(padding)}`;
+}
+
+export const strToBase64Url = str => base64ToBase64Url(strToBase64(str));
+export const strFromBase64Url = strEncoded => strFromBase64(base64UrlToBase64(strEncoded));
+
 export const objToBase64 = obj => strToBase64(JSON.stringify(obj));
 export const objFromBase64 = objEncoded => JSON.parse(strFromBase64(objEncoded));

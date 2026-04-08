@@ -18,7 +18,8 @@ slib(
                 "index.js",
                 "google/index.js",
                 "facebook/index.js",
-                "seznam/index.js"
+                "seznam/index.js",
+                "magic/index.js"
             ]
         },
     }
