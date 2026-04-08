@@ -69,6 +69,14 @@ export const validateStr = (required, str, errProp) => {
     throw new Error(`${errProp} is not a valid string`);
 }
 
+export const validateTtl = (required, ttl, errProp) => {
+    const isNum = typeof ttl === "number";
+    if ((ttl == null || ttl === 0) && !required) { return; }
+
+    if (typeof ttl === "number" && Number.isFinite(ttl)) { return Math.floor(ttl); }
+    throw new Error(`${propName} must be a positive number`);
+}
+
 export const wrapFnWith = (fn, ...withArguments)=>{
     return (...a)=>fn(...withArguments, ...a);
 }

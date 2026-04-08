@@ -1,5 +1,4 @@
 import { solids } from "@randajan/props";
-import { vault } from "../consts";
 import { formatCredentials } from "../tools";
 
 
@@ -7,19 +6,23 @@ import { formatCredentials } from "../tools";
 
 export class Account {
 
-    constructor(client, credentials={}) {
+    static create(grant, credentials={}) {
+        return new this(grant, credentials);
+    }
+
+    constructor(grant, credentials={}) {
 
         credentials = formatCredentials(credentials);
 
         solids(this, {
-            client,
+            grant,
             credentials
         }, false);
     }
 
     async uid() {
         const profile = await this.profile();
-        const { name, accIdKey } = this.client;
+        const { name, accIdKey } = this.grant;
         const id = profile?.[accIdKey];
         if (id) { return `${name}:${id}`; }
     }
@@ -33,11 +36,11 @@ export class Account {
     }
 
     async scopes(scopes) {
-        const grant = vault.get(this.client);
+       const { grant } = this;
 
-        if (typeof grant.effaceScopes !== "function") { return []; }
+        if (typeof grant._effaceScopes !== "function") { return []; }
 
-        return grant.effaceScopes(scopes);
+        return grant._effaceScopes(scopes);
     }
 
 }

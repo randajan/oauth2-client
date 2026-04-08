@@ -1,9 +1,13 @@
+import { solids } from "@randajan/props";
 import { RedirectError } from "../errors";
 import { extendURL, isValidURL, objFromBase64, objToBase64, validateFn, validateObj, validateStr, validateURL, wrapFnWith } from "../tools";
 import { Account } from "./Account";
+import { Client } from "./Client";
 
 
 export class Grant {
+
+    static isClass(Class) { return typeof Class === "function" && (Class === Grant || Class.prototype instanceof Grant); }
 
     static name="";
     static accIdKey="";
@@ -11,72 +15,87 @@ export class Grant {
     static reqClientSecret = true;
     static Account = Account;
 
-    constructor(client, opt={}) {
-        const { name, accIdKey, reqClientId, reqClientSecret } = this.constructor;
+    constructor(opt={}) {
+        const { name, accIdKey, reqClientId, reqClientSecret, Account } = this.constructor;
+        const { client } = opt;
 
-        this.client = client;
-        this.name = name;
-        this.key = validateStr(false, opt.key, "options.key") || name;
-        this.accIdKey = validateStr(false, opt.accIdKey, "options.accIdKey") || accIdKey;
+        if (client != null && !Client.is(client)) {
+            throw new Error("options.client must be an instance of Client");
+        }
 
-        this.isOffline = !!opt.isOffline;
-        this.clientId = validateStr(reqClientId, opt.clientId, "options.clientId");
-        this.clientSecret = validateStr(reqClientSecret, opt.clientSecret, "options.clientSecret");
-
-        this.redirectUri = validateURL(true, opt.redirectUri, "options.redirectUri");
-        this.fallbackUri = validateURL(true, opt.fallbackUri, "options.fallbackUri");
-        this.landingUri = validateURL(false, opt.landingUri, "options.landingUri");
-
-        this.onAuth = wrapFnWith(validateFn(true, opt.onAuth, "options.onAuth"), client);
-        this.onRenew = wrapFnWith(validateFn(true, opt.onRenew, "options.onRenew"), client);
-        this.getCredentials = wrapFnWith(validateFn(false, opt.getCredentials, "options.getCredentials") || ((_, c)=>c), client);
-        this.optExtra = validateObj(false, opt.extra, "options.extra") || {};
-    }
-
-    createAccount(credentials) {
-        const { client, constructor:{ Account } } = this;
-        return new Account(client, credentials);
-    }
-
-    generateAuthUrl(state, extra={}) {
+        solids(this, {
+            client,
+            Account,
+            name,
+            key:validateStr(false, opt.key, "options.key") || name,
+            accIdKey:validateStr(false, opt.accIdKey, "options.accIdKey") || accIdKey,
+            isOffline:!!opt.isOffline,
+            clientId: validateStr(reqClientId, opt.clientId, "options.clientId"),
+            clientSecret: validateStr(reqClientSecret, opt.clientSecret, "options.clientSecret"),
+            redirectUri: validateURL(true, opt.redirectUri, "options.redirectUri"),
+            fallbackUri: validateURL(true, opt.fallbackUri, "options.fallbackUri"),
+            landingUri: validateURL(false, opt.landingUri, "options.landingUri"),
+            onAuth: wrapFnWith(validateFn(true, opt.onAuth, "options.onAuth"), this),
+            onRenew: wrapFnWith(validateFn(true, opt.onRenew, "options.onRenew"), this),
+            extra: Object.freeze(validateObj(false, opt.extra, "options.extra") || {}),
+        });
 
     }
 
-    serializeState(stateObject, landingUri) {
+    _generateFallbackUrl(majorCode, err) {
+        const c = RedirectError.is(err) ? err.code : 0;
+        return extendURL(this.fallbackUri, {errorCode:majorCode*100+c, errorMessage:err.message});
+    }
+
+    _generateAuthUrl(state, extra={}) {
+
+    }
+
+    _serializeState(stateObject, landingUri) {
 
         if ((landingUri || !this.landingUri) && !isValidURL(landingUri)) {
-            throw new RedirectError(1, "Bad request. Missing valid 'landingUri'");
+            throw new RedirectError(2, "Bad request. Missing valid 'landingUri'");
         }
 
         return objToBase64([ landingUri || this.landingUri, stateObject ]);
     }
 
-    async getInitAuthURL(options={}) {
+    async _swapCodeForTokens(code) {
+
+    }
+
+    async _resolveInitAuthURL(options={}) {
         const { landingUri, state:stateObj, extra } = options;
-        const state = this.serializeState(stateObj, landingUri);
-        return this.generateAuthUrl(state, extra || {});
+        const state = this._serializeState(stateObj, landingUri);
+        return this._generateAuthUrl(state, extra || {});
     }
 
-    async swapCodeForTokens(code) {
-
-    }
-
-    async getExitAuthURL({code, state}, context) {
-        if (!code) { throw new RedirectError(201, "Bad request. Missing 'code'"); }
+    async _resolveExitAuthURL({code, state}, context) {
+        if (!code) { throw new RedirectError(4, "Bad request. Missing 'code'"); }
 
         const [ landingUri, stateObj ] = objFromBase64(state);
-        if (!isValidURL(landingUri)) { throw new RedirectError(202, "Bad request. Missing valid 'state'"); }
+        if (!isValidURL(landingUri)) { throw new RedirectError(5, "Bad request. Missing valid 'state'"); }
 
-        const tokens = await this.swapCodeForTokens(code);
-        const account = this.createAccount(tokens);
+        const tokens = await this._swapCodeForTokens(code);
+        const account = this.account(tokens);
+
 
         const customUri = await this.onAuth(account, { context, landingUri, state:stateObj });
         return customUri || landingUri;
     }
 
-    fallbackRedirect(majorCode, err) {
-        const c = RedirectError.is(err) ? err.code : 0;
-        return extendURL(this.fallbackUri, {errorCode:majorCode*100+c, errorMessage:err.message});
+    account(credentials) {
+        return new this.Account(this, credentials);
+    }
+
+    async getInitAuthURL(options = {}) {
+        try { return await this._resolveInitAuthURL(options); }
+        catch (err) { return this._generateFallbackUrl(1, err); }
+    }
+
+    async getExitAuthURL({ code, state }, context) {
+        try { return await this._resolveExitAuthURL({ code, state }, context); }
+        catch (err) { return this._generateFallbackUrl(2, err); }
     }
 
 }

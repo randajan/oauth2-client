@@ -1,5 +1,4 @@
-import { RedirectError } from "../errors";
-import { isValidURL, objToBase64 } from "../tools";
+import { solid, virtuals } from "@randajan/props";
 import { Grant } from "./Grant";
 
 export class ScopeGrant extends Grant {
@@ -8,55 +7,61 @@ export class ScopeGrant extends Grant {
     static scopesCommon=[];
     static scopesNoPrefix=[];
 
-    constructor(client, opt={}) {
-        super(client, opt);
+    constructor(opt={}) {
+        super(opt);
 
-        const { scopesCommon } = this.constructor;
-        this.scopesRequired = this.effaceScopes([...scopesCommon, ...(opt.scopes || [])]);
+        const { scopePrefix, scopesCommon, scopesNoPrefix } = this.constructor;
+        const scopesRequired = this._effaceScopes([...scopesCommon, ...(opt.scopes || [])]);
+
+        solid(this, "scopePrefix", scopePrefix);
+
+        virtuals(this, {
+            scopesRequired:_=>[...scopesRequired],
+            scopesNoPrefix:_=>[...scopesNoPrefix]
+        });
     }
 
-    normalizeScope(scope) {
+    _normalizeScope(scope) {
         if (scope == null) { return; }
         return String(scope).replace(/[\s\n\r]+/g, " ").trim().toLowerCase();
     }
 
-    effaceScope(scope, withPrefix=false) {
-        const { scopePrefix, scopesNoPrefix } = this.constructor;
+    _effaceScope(scope, withPrefix=false) {
+        const { scopePrefix } = this;
 
-        scope = this.normalizeScope(scope);
+        scope = this._normalizeScope(scope);
         if (!scope) { return; }
-        if (!scopePrefix || scopesNoPrefix.includes(scope)) { return scope; }
+        if (!scopePrefix || this.scopesNoPrefix.includes(scope)) { return scope; }
 
         const sw = scope.startsWith(scopePrefix);
         return (sw === withPrefix) ? scope : (withPrefix ? (scopePrefix+scope) : scope.substring(scopePrefix.length));
     }
 
-    effaceScopes(scopes, withPrefix=false, withRequired=false) {
-        const { scopesRequired } = this;
+    _effaceScopes(scopes, withPrefix=false, withRequired=false) {
 
         if (typeof scopes === "string") { scopes = scopes.split(" "); }
         if (!Array.isArray(scopes)) { scopes = []; }
-        if (withRequired && Array.isArray(scopesRequired)) { scopes = scopes.concat(scopesRequired); }
+        if (withRequired) { scopes = scopes.concat(this.scopesRequired); }
 
         const r = new Set();
         for (let scope of scopes) {
-            scope = this.effaceScope(scope, withPrefix);
+            scope = this._effaceScope(scope, withPrefix);
             if (scope) { r.add(scope); }
         }
         return [...r];
     }
 
-    generateAuthUrl(scope, state, extra={}) {
+    _generateAuthUrl(scope, state, extra={}) {
 
     }
 
-    async getInitAuthURL(options={}) {
+    async _resolveInitAuthURL(options={}) {
         const { landingUri, state:stateObj, scopes, extra } = options;
 
-        const state = this.serializeState(stateObj, landingUri);
-        const scope = this.effaceScopes(scopes, true, true);
+        const state = this._serializeState(stateObj, landingUri);
+        const scope = this._effaceScopes(scopes, true, true);
 
-        return this.generateAuthUrl(scope, state, extra || {});
+        return this._generateAuthUrl(scope, state, extra || {});
     }
 
 }

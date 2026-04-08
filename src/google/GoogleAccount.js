@@ -8,12 +8,10 @@ import { vault } from "../consts";
 
 export class GoogleAccount extends Account {
 
-    constructor(client, credentials={}) {
-        super(client, credentials);
+    constructor(grant, credentials={}) {
+        super(grant, credentials);
 
-        const grant = vault.get(client);
-
-        const auth = grant.createAuth();
+        const auth = grant._createAuth();
         auth.setCredentials(this.credentials);
         auth.on('tokens', _=>{ grant.onRenew(this); });
 

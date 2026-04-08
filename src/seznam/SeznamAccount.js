@@ -1,18 +1,14 @@
-import { google } from "googleapis";
-import { solids } from "@randajan/props";
-
 import { Account } from "../class/Account";
-import { vault } from "../consts";
 
 
 
 export class SeznamAccount extends Account {
 
     async profile() {
-        const grant = vault.get(this.client);
+        const { grant } = this;
         const { access_token } = this.credentials;
 
-        return grant.fetchApiGet("/user", {
+        return grant._fetchApiGet("/user", {
             Authorization: `bearer ${access_token}`, "Accept": "application/json"
         });
     }

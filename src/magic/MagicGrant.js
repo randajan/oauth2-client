@@ -1,8 +1,9 @@
 import { createHmac, randomBytes, timingSafeEqual } from "crypto";
 import { RedirectError } from "../errors";
-import { base64ToBase64Url, extendURL, isValidURL, strFromBase64Url, strToBase64Url, validateFn, validateStr, validateURL, wrapFnWith } from "../tools";
+import { base64ToBase64Url, extendURL, isValidURL, strFromBase64Url, strToBase64Url, validateFn, validateStr, validateTtl, validateURL, wrapFnWith } from "../tools";
 import { Grant } from "../class/Grant";
 import { MagicAccount } from "./MagicAccount";
+import { solids } from "@randajan/props";
 
 
 export class MagicGrant extends Grant {
@@ -12,31 +13,25 @@ export class MagicGrant extends Grant {
     static reqClientId = false;
     static Account = MagicAccount;
 
-    constructor(client, opt = {}) {
-        super(client, opt);
+    constructor(opt = {}) {
+        super(opt);
 
-        this.magicUri = validateURL(false, opt.magicUri, "options.magicUri") || this.landingUri;
-        this.magicTtlMs = this.parseTtl(opt.magicTtlMs, 600000, "options.magicTtlMs");
-        this.accessTokenTtlMs = this.parseTtl(opt.accessTokenTtlMs, 86400000, "options.accessTokenTtlMs");
-        this.onMagic = wrapFnWith(validateFn(true, opt.onMagic, "options.onMagic"), client);
-        this.usedCodes = new Map();
-    }
-
-    parseTtl(value, fallback, propName) {
-        const ttl = (value == null) ? fallback : Number(value);
-        if (!Number.isFinite(ttl) || ttl <= 0) {
-            throw new Error(`${propName} must be a positive number`);
-        }
-        return Math.floor(ttl);
+        solids(this, {
+            magicUri:validateURL(false, opt.magicUri, "options.magicUri") || this.landingUri,
+            magicTtlMs: validateTtl(false, opt.magicTtlMs, "options.magicTtlMs") || 600000,
+            accessTokenTtlMs: validateTtl(false, opt.accessTokenTtlMs, "options.accessTokenTtlMs") || 86400000,
+            onMagic: wrapFnWith(validateFn(true, opt.onMagic, "options.onMagic"), this),
+            usedCodes: new Map(),
+        });
     }
 
     async getInitAuthURL(options = {}) {
         const { magicUri, onMagic } = this;
         const { landingUri, state:stateObj, userId, extra } = options;
 
-        const state = this.serializeState(stateObj, landingUri);
+        const state = this._serializeState(stateObj, landingUri);
 
-        const confirmUrl = this.generateAuthUrl(userId, state, extra || {});
+        const confirmUrl = this._generateAuthUrl(userId, state, extra || {});
 
         const customUrl = await onMagic(confirmUrl, {
             magicUri,
@@ -48,10 +43,10 @@ export class MagicGrant extends Grant {
         if (customUrl == null) { return extendURL(magicUri, { userId }); }
         if (isValidURL(customUrl)) { return customUrl; }
 
-        throw new RedirectError(13, "Bad request. options.onMagic must return valid URL");
+        throw new RedirectError(11, "Bad request. options.onMagic must return valid URL");
     }
 
-    generateAuthUrl(userId, state, extra={}) {
+    _generateAuthUrl(userId, state, extra={}) {
         const { redirectUri, magicTtlMs } = this;
 
         if (typeof userId !== "string" || userId === "") {
@@ -62,11 +57,11 @@ export class MagicGrant extends Grant {
         return extendURL(redirectUri, { code, state });
     }
 
-    async swapCodeForTokens(code) {
-        const payload = this.readToken(code, "magic_code", 21, 22);
+    async _swapCodeForTokens(code) {
+        const payload = this.readToken(code, "magic_code");
         const isNew = this.trackUsedCode(code);
         if (!isNew) {
-            throw new RedirectError(23, "Magic code has already been used");
+            throw new RedirectError(19, "Magic code has already been used");
         }
 
         const { token:access_token, payload:accessPayload } = this.createToken("access_token", payload.sub, this.accessTokenTtlMs);
@@ -77,17 +72,17 @@ export class MagicGrant extends Grant {
     }
 
     readAccessToken(accessToken) {
-        return this.readToken(accessToken, "access_token", 31, 32);
+        return this.readToken(accessToken, "access_token");
     }
 
-    readToken(token, type, errorCode = 21, expiredCode = 22) {
+    readToken(token, type) {
         if (!token || typeof token !== "string") {
-            throw new RedirectError(errorCode, `Bad request. Missing '${type}' token`);
+            throw new RedirectError(13, `Bad request. Missing '${type}' token`);
         }
 
         const parts = token.split(".");
         if (parts.length !== 2 || !parts[0] || !parts[1]) {
-            throw new RedirectError(errorCode, "Invalid token format");
+            throw new RedirectError(14, "Invalid token format");
         }
 
         const [ payloadEncoded, signature ] = parts;
@@ -97,26 +92,26 @@ export class MagicGrant extends Grant {
         const expected = Buffer.from(signatureExpected, "utf8");
 
         if (given.length !== expected.length || !timingSafeEqual(given, expected)) {
-            throw new RedirectError(errorCode, "Invalid token signature");
+            throw new RedirectError(15, "Invalid token signature");
         }
 
         let payload;
         try {
             payload = JSON.parse(strFromBase64Url(payloadEncoded));
         } catch (err) {
-            throw new RedirectError(errorCode, "Invalid token payload");
+            throw new RedirectError(16, "Invalid token payload");
         }
 
         const now = Date.now();
         const { typ, sub, exp } = payload || {};
 
         if (typ !== type || typeof sub !== "string" || !sub) {
-            throw new RedirectError(errorCode, "Invalid token claims");
+            throw new RedirectError(17, "Invalid token claims");
         }
 
         if (!Number.isFinite(exp) || now >= exp) {
             const message = (type === "access_token") ? "Access token has expired" : "Magic code has expired";
-            throw new RedirectError(expiredCode, message);
+            throw new RedirectError(18, message);
         }
 
         return payload;

@@ -3,6 +3,7 @@ import { ScopeGrant } from "../class/ScopeGrant";
 import { extendURL, validateStr } from "../tools";
 import { RedirectError } from "../errors";
 import { FacebookAccount } from "./FacebookAccount";
+import { solid } from "@randajan/props";
 
 
 
@@ -15,13 +16,13 @@ export class FacebookGrant extends ScopeGrant {
     static scopesNoPrefix = [];
     static Account = FacebookAccount;
 
-    constructor(client, opt = {}) {
-        super(client, opt);
+    constructor(opt = {}) {
+        super(opt);
 
-        this.apiVersion = validateStr(false, opt.apiVersion, "options.apiVersion") || "v23.0";
+        solid(this, "apiVersion", validateStr(false, opt.apiVersion, "options.apiVersion") || "v23.0");
     }
 
-    createApiUrl(subdomain, path, query={}) {
+    _createApiUrl(subdomain, path, query={}) {
         const { apiVersion } = this;
         return extendURL(
             `https://${subdomain}.facebook.com/${apiVersion}${path}`,
@@ -29,17 +30,17 @@ export class FacebookGrant extends ScopeGrant {
         );
     }
 
-    async fetchApi(path, query, errorCode = 2) {
-        const url = this.createApiUrl("graph", path, query);
+    async _fetchApi(path, query) {
+        const url = this._createApiUrl("graph", path, query);
         const res = await fetch(url);
-        if (!res.ok) { throw new RedirectError(errorCode, await res.text()); }
+        if (!res.ok) { throw new RedirectError(20, await res.text()); }
         return res.json();
     }
 
-    generateAuthUrl(scope, state, extra) {
+    _generateAuthUrl(scope, state, extra) {
         const { clientId, redirectUri } = this;
 
-        return this.createApiUrl("www", `/dialog/oauth`, {
+        return this._createApiUrl("www", `/dialog/oauth`, {
             ...extra,
             response_type: "code",
             client_id: clientId,
@@ -49,10 +50,10 @@ export class FacebookGrant extends ScopeGrant {
         });
     }
 
-    async swapCodeForTokens(code) {
+    async _swapCodeForTokens(code) {
         const { clientId, clientSecret, redirectUri } = this;
 
-        return this.fetchApi(`/oauth/access_token`, {
+        return this._fetchApi(`/oauth/access_token`, {
             client_id: clientId,
             client_secret: clientSecret,
             redirect_uri: redirectUri,

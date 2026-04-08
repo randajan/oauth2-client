@@ -5,7 +5,7 @@ import { vault } from "../consts";
 export class FacebookAccount extends Account {
 
     async profile(fields = ["id", "name", "email", "picture"]) {
-        const grant = vault.get(this.client);
+        const { grant } = this;
         const { access_token } = this.credentials;
 
         return grant.fetchApi(`/me`, {
@@ -19,7 +19,7 @@ export class FacebookAccount extends Account {
     }
 
     async scopes() {
-        const grant = vault.get(this.client);
+        const { grant } = this;
         const { access_token } = this.credentials;
 
         const { data } = await grant.fetchApi("/me/permisssions", {

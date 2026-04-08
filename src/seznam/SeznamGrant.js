@@ -14,37 +14,37 @@ export class SeznamGrant extends ScopeGrant {
     static scopesNoPrefix = [];              // nic zvláštního
     static Account = SeznamAccount;
 
-    createApiUrl(path, query = {}) {
+    _createApiUrl(path, query = {}) {
         return extendURL(
             `https://login.szn.cz/api/v1${path}`,
             query
         );
     }
 
-    async fetchApiGet(path, headers, errorCode = 2) {
-        const url = this.createApiUrl(path);
+    async _fetchApiGet(path, headers) {
+        const url = this._createApiUrl(path);
         const res = await fetch(url, { headers });
-        if (!res.ok) { throw new RedirectError(errorCode, await res.text()); }
+        if (!res.ok) { throw new RedirectError(20, await res.text()); }
         return res.json();
     }
 
-    async fetchApiPost(path, body, errorCode = 2) {
-        const url = this.createApiUrl(path);
+    async _fetchApiPost(path, body) {
+        const url = this._createApiUrl(path);
         const res = await fetch(url, {
             method: "POST",
             headers: { "Content-Type": "application/json", "Accept": "application/json" },
             body: JSON.stringify(body)
         });
-        if (!res.ok) { throw new RedirectError(errorCode, await res.text()); }
+        if (!res.ok) { throw new RedirectError(20, await res.text()); }
         return res.json();
     }
 
-    generateAuthUrl(scope, state, extra) {
+    _generateAuthUrl(scope, state, extra) {
         const { clientId, redirectUri, isOffline } = this;
 
         const access_type = isOffline ? "offline" : "";
 
-        return this.createApiUrl("/oauth/auth", {
+        return this._createApiUrl("/oauth/auth", {
             ...extra,
             access_type,
             response_type: "code",
@@ -55,10 +55,10 @@ export class SeznamGrant extends ScopeGrant {
         });
     }
 
-    async swapCodeForTokens(code) {
+    async _swapCodeForTokens(code) {
         const { clientId, clientSecret, redirectUri } = this;
 
-        return this.fetchApiPost("/oauth/token", {
+        return this._fetchApiPost("/oauth/token", {
             grant_type: "authorization_code",
             code,
             client_id: clientId,

@@ -5,7 +5,7 @@ import { vault } from "../consts";
 export class MagicAccount extends Account {
 
     async profile() {
-        const grant = vault.get(this.client);
+        const { grant } = this;
         const { access_token } = this.credentials;
         const payload = grant.readAccessToken(access_token);
         return { [grant.accIdKey]: payload.sub };

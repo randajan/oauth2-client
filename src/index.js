@@ -1,6 +1,6 @@
-import { createOAuthHub } from "./class/OAuthHub";
+import { Client } from "./class/Client";
 
 export * from "./tools";
-export * from "./class/OAuthHub";
+export * from "./class/Client";
 
-export default createOAuthHub;
+export const createClient = (options={}) => new Client(options);

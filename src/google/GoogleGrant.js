@@ -1,6 +1,7 @@
 import { google } from "googleapis";
 import { ScopeGrant } from "../class/ScopeGrant";
 import { GoogleAccount } from "./GoogleAccount";
+import { solid } from "@randajan/props";
 
 export class GoogleGrant extends ScopeGrant {
 
@@ -11,18 +12,18 @@ export class GoogleGrant extends ScopeGrant {
     static scopesNoPrefix=["openid"];
     static Account = GoogleAccount;
 
-    constructor(client, opt={}) {
-        super(client, opt);
+    constructor(opt={}) {
+        super(opt);
 
-        this.auth = this.createAuth();
+        solid(this, "auth", this._createAuth());
     }
 
-    createAuth() {
-        const { optExtra, clientId, clientSecret, redirectUri } = this;
-        return new google.auth.OAuth2({ ...optExtra, clientId, clientSecret, redirectUri });
+    _createAuth() {
+        const { extra, clientId, clientSecret, redirectUri } = this;
+        return new google.auth.OAuth2({ ...extra, clientId, clientSecret, redirectUri });
     }
 
-    generateAuthUrl(scope, state, extra) {
+    _generateAuthUrl(scope, state, extra) {
         return this.auth.generateAuthUrl({
             ...extra,
             access_type: this.isOffline ? "offline" : "online",
@@ -31,7 +32,7 @@ export class GoogleGrant extends ScopeGrant {
         });
     }
 
-    async swapCodeForTokens(code) {
+    async _swapCodeForTokens(code) {
         const { tokens } = await this.auth.getToken(code);
         return tokens;
     }
