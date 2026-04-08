@@ -14,14 +14,12 @@ export class GoogleGrant extends ScopeGrant {
     constructor(client, opt={}) {
         super(client, opt);
 
-        const { optExtra, clientId, clientSecret, redirectUri } = this;
-
-        this.optAuth = { ...optExtra, clientId, clientSecret, redirectUri };
         this.auth = this.createAuth();
     }
 
     createAuth() {
-        return new google.auth.OAuth2(this.optAuth);
+        const { optExtra, clientId, clientSecret, redirectUri } = this;
+        return new google.auth.OAuth2({ ...optExtra, clientId, clientSecret, redirectUri });
     }
 
     generateAuthUrl(scope, state, extra) {

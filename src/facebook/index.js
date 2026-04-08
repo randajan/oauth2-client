@@ -3,8 +3,11 @@ import { FacebookAccount } from "./FacebookAccount";
 import { FacebookGrant } from "./FacebookGrant";
 
 
-export const createFacebookOAuth2 = (options={})=>new Client(FacebookGrant, options);
-export default createFacebookOAuth2;
+export class FacebookClient extends Client {
+    static Grant = FacebookGrant;
+}
+
+export default (options={})=>new FacebookClient(options);
 
 export {
     FacebookAccount,

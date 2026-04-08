@@ -18,10 +18,10 @@ The package ships dual builds so you can **import** or **require** according to 
 
 ```js
 // ESM
-import { createGoogleOAuth2 } from "@randajan/oauth2-client/google";
+import googleOAuth2 from "@randajan/oauth2-client/google";
 
 // CommonJS
-const { createGoogleOAuth2 } = require("@randajan/oauth2-client/google");
+const { default: googleOAuth2 } = require("@randajan/oauth2-client/google");
 ```
 
 ---
@@ -30,9 +30,9 @@ const { createGoogleOAuth2 } = require("@randajan/oauth2-client/google");
 
 ```js
 import express from "express";
-import { createGoogleOAuth2 } from "@randajan/oauth2-client/google";
+import googleOAuth2 from "@randajan/oauth2-client/google";
 
-const google = createGoogleOAuth2({
+const google = googleOAuth2({
   clientId:          process.env.GOOGLE_CLIENT_ID,
   clientSecret:      process.env.GOOGLE_CLIENT_SECRET,
   redirectUri:       "http://localhost:3999/oauth/exit",     // common backend route
@@ -40,14 +40,14 @@ const google = createGoogleOAuth2({
   fallbackUri:       "http://localhost:3000/login/error",    // frontâ€‘end error screen
   scopes:            ["drive"],                              // extra scopes
   isOffline:         true,                                   // ask for refresh_token
-  onAuth: async (account, context) => {
+  onAuth: async (self, account, context) => {
     // first time we see this user
-    console.log("new account", await account.uid());
+    console.log("new account", self.key, await account.uid());
     // store tokens somewhere safe â€¦
   },
-  onRenew: async account => {
+  onRenew: async (self, account) => {
     // Google issued fresh tokens
-    console.log("tokens renewed for", account);
+    console.log("tokens renewed for", self.key, account);
   },
   extra:{
     //will be passed to new google.auth.OAuth2(...)
@@ -84,9 +84,9 @@ Every concrete OAuth2 client (Google, MicrosoftÂ â€¦â€‹) accepts the 
 | `landingUri` | `string (URL)` | Â  | Default frontâ€‘end page after successful login (may be overridden per request) |
 | `scopes` | `stringÂ \|Â string[]` | Â  | Extra scopes. Google is always invoked with `openidÂ userinfo.profileÂ userinfo.email` |
 | `isOffline` | `boolean` | Â  | When `true` requests `access_type=offline` so a `refresh_token` is issued |
-| `onAuth` | `(account, { context, state, landingUri })Â => Promise<string[]Â \|Â void>` | âś”ď¸Ž | Called once after new account is created. Return uri (string) for custom redirect |
-| `onRenew` | `(account)Â => void` | âś”ď¸Ž | Called whenever the accessâ€‘token is automatically refreshed |
-| `getCredentials` | `(userId)`=>object | Promise<object> | | Called inside oauth.account(...), all arguments will be passed. If this trait returns Promise oauth.account(...) will also return Promise.
+| `onAuth` | `(self, account, { context, state, landingUri }) => Promise<string \| void>` | yes | Called once after new account is created. Return a URL for custom redirect. |
+| `onRenew` | `(self, account) => void \| Promise<void>` | yes | Called whenever credentials are refreshed by the provider SDK. |
+| `getCredentials` | `(self, ...args) => object \| Promise<object>` | no | Called inside `oauth.account(...)`. Receives `self` first, then original arguments. |
 | `extra` | `object` | Â  | Arbitrary options forwarded to the underlying SDK |
 
 ---
@@ -96,17 +96,17 @@ Every concrete OAuth2 client (Google, MicrosoftÂ â€¦â€‹) accepts the 
 ### Import path
 
 ```js
-import { createGoogleOAuth2 } from "@randajan/oauth2-client/google";
+import googleOAuth2 from "@randajan/oauth2-client/google";
 ```
 
-### Factory **`createGoogleOAuth2`**
+### Factory **`default`**
 
 | Member | Returns | Description |
 |--------|---------|-------------|
-| `createGoogleOAuth2(options)` | `Client` | Creates a new client. See **options** above |
+| `googleOAuth2(options)` | `GoogleClient` | Creates a new client. See **options** above |
 | `getInitAuthURL({ landingUri?, scopes?, state?, extra? })` | `Promise<string>` | Generates the consentâ€‘screen URL. Parameters override the defaults from the constructor |
-| `getExitAuthURL({code, state}, context)` | `Promise<string>` | Exchanges `code` for tokens, triggers `onAuth`, then returns a redirect URL (either `landingUri` or a new **init** URL if more scopes are needed). Context will be passed as second argument to `onAuth` trait |
-| `account(credentials, ...args)` | `GoogleAccount` | Converts raw token `credentials` into a handy account object. getCredentials(credentials, ...args) trait will be used if was provided into the options |
+| `getExitAuthURL({code, state}, context)` | `Promise<string>` | Exchanges `code` for tokens, triggers `onAuth`, then returns a redirect URL (either `landingUri` or a new **init** URL if more scopes are needed). Context will be passed in the third argument of `onAuth(self, account, context)` |
+| `account(credentials, ...args)` | `GoogleAccount` | Converts raw token `credentials` into a handy account object. `getCredentials(self, credentials, ...args)` hook will be used if provided in options |
 
 ### Class **`GoogleAccount`**
 
@@ -132,20 +132,20 @@ import createMagicOAuth2 from "@randajan/oauth2-client/magic";
 
 ```js
 const magic = createMagicOAuth2({
-  magicSecret: process.env.MAGIC_SECRET,
+  clientSecret: process.env.MAGIC_SECRET,
   redirectUri: "http://localhost:3999/oauth/magic/exit",
   magicUri: "http://localhost:3000/magic-lobby",
   landingUri: "http://localhost:3000",
   fallbackUri: "http://localhost:3000/login/error",
-  onMagic: async (confirmUrl, { userId, magicUri }) => {
+  onMagic: async (self, confirmUrl, { userId, magicUri }) => {
     await sendMagicEmail(userId, confirmUrl);
     return `${magicUri}?emailSent=1&userId=${encodeURIComponent(userId)}`;
     // return null; // fallback -> magicUri?userId=...
   },
-  onAuth: async (account) => {
+  onAuth: async (self, account) => {
     console.log(await account.profile()); // { id: "..." }
   },
-  onRenew: async () => {}
+  onRenew: async (self) => {}
 });
 
 const redirectUrl = await magic.getInitAuthURL({
@@ -159,11 +159,11 @@ const redirectUrl = await magic.getInitAuthURL({
 
 | Option | Type | Required | Description |
 |--------|------|----------|-------------|
-| `magicSecret` | `string` | yes | HMAC secret used to sign and verify magic tokens |
+| `clientSecret` | `string` | yes | HMAC secret used to sign and verify magic tokens |
 | `magicUri` | `string (URL)` | no | URL used after init flow when `onMagic` returns `null`/`undefined` |
 | `magicTtlMs` | `number` | no | TTL for magic `code` and anti-replay memory (default `600000`) |
 | `accessTokenTtlMs` | `number` | no | TTL for issued `access_token` credentials (default `86400000`) |
-| `onMagic` | `(confirmUrl, meta) => Promise<string \| void> \| string \| void` | yes | Callback that receives generated confirmation URL and returns final redirect URL (or nothing for `magicUri` fallback) |
+| `onMagic` | `(self, confirmUrl, meta) => Promise<string \| void> \| string \| void` | yes | Callback that receives generated confirmation URL and returns final redirect URL (or nothing for `magicUri` fallback) |
 
 ### Init options
 
@@ -173,6 +173,83 @@ If `onMagic` returns `null`/`undefined`, fallback URL is `magicUri` with appende
 
 ---
 
+## OAuthHub
+
+`OAuthHub` removes repetitive wiring when you use multiple OAuth clients in one app.
+
+```js
+import { OAuthHub } from "@randajan/oauth2-client";
+import { GoogleClient } from "@randajan/oauth2-client/google";
+import { FacebookClient } from "@randajan/oauth2-client/facebook";
+
+const hub = new OAuthHub({
+  providers: [GoogleClient, FacebookClient],
+  fallbackUri: "https://app.local/login/error",
+  onAuth: async (self, account, { context, state, landingUri }) => {
+    console.log("auth", self.key, self.name, state, context);
+    return landingUri;
+  },
+  onRenew: async (self, account) => {
+    console.log("renew", self.key, await account.uid());
+  },
+  getCredentials: async (self, userId) => {
+    return loadCredentials(self.key, userId);
+  }
+});
+
+hub.add("google", {
+  key: "googleUser",
+  clientId: process.env.GOOGLE_CLIENT_ID,
+  clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+  redirectUri: "https://api.local/oauth/google/user",
+  landingUri: "https://app.local"
+});
+
+hub.add("google", {
+  key: "googleOwner",
+  clientId: process.env.GOOGLE_OWNER_CLIENT_ID,
+  clientSecret: process.env.GOOGLE_OWNER_CLIENT_SECRET,
+  redirectUri: "https://api.local/oauth/google/owner",
+  isOffline: true,
+  scopes: ["drive"]
+});
+
+const googleUser = hub.get("googleUser", true);
+const initUrl = await googleUser.getInitAuthURL({
+  landingUri: "https://app.local/dashboard",
+  state: { srcTag: "signup" }
+});
+```
+
+### Hub rules
+
+- `key` is optional in `hub.add()`, defaults to provider name.
+- Duplicate `key` throws.
+- Unknown provider name throws.
+- `options.providers` in constructor must be a non-empty array of `Client` subclasses.
+- Per-client hooks (`onAuth`, `onRenew`, `getCredentials`, `onMagic`) are not allowed in `hub.add(...)` options.
+- Hooks are configured globally in `new OAuthHub({ onAuth, onRenew, getCredentials, onMagic })`.
+
+### Hook signature breaking change
+
+All hooks now receive `self` as the first argument in every flow (with or without Hub):
+
+- `onAuth(self, account, context)`
+- `onRenew(self, account)`
+- `getCredentials(self, ...args)`
+- `onMagic(self, confirmUrl, meta)` (magic provider)
+
+Migration example:
+
+```js
+// before
+onAuth: async (account, context) => { ... }
+
+// now
+onAuth: async (self, account, context) => {
+  console.log(self.key, self.name);
+}
+```
 
 ## Utility tool
 
@@ -191,4 +268,5 @@ A tiny helper that appends query parameters while keeping the rest of the URL in
 ## License
 
 MIT Â©Â [randajan](https://github.com/randajan)
+
 

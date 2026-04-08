@@ -3,8 +3,11 @@ import { GoogleAccount } from "./GoogleAccount";
 import { GoogleGrant } from "./GoogleGrant";
 
 
-export const createGoogleOAuth2 = (options={})=>new Client(GoogleGrant, options);
-export default createGoogleOAuth2;
+export class GoogleClient extends Client {
+    static Grant = GoogleGrant;
+}
+
+export default (options={})=>new GoogleClient(options);
 
 export {
     GoogleAccount,

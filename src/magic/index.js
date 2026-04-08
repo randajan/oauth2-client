@@ -3,8 +3,11 @@ import { MagicAccount } from "./MagicAccount";
 import { MagicGrant } from "./MagicGrant";
 
 
-export const createMagicOAuth2 = (options = {}) => new Client(MagicGrant, options);
-export default createMagicOAuth2;
+export class MagicClient extends Client {
+    static Grant = MagicGrant;
+}
+
+export default (options = {}) => new MagicClient(options);
 
 export {
     MagicAccount,

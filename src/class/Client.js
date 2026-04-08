@@ -1,15 +1,22 @@
 import { vault } from "../consts";
 import { virtuals } from "@randajan/props";
+import { Grant } from "./Grant";
 
 
 export class Client {
 
-    constructor(Grant, options={}) {
+    static Grant = Grant;
+
+    static isClass(Class) { return typeof Class === "function" && (Class === Client || Class.prototype instanceof Client); }
+
+    constructor(options={}) {
+        const { Grant } = this.constructor;
         const grant = new Grant(this, options);
 
         virtuals(this, {
+            key:_=>grant.key,
             name:_=>grant.name,
-            uidKey:_=>grant.uidKey
+            accIdKey:_=>grant.accIdKey
         })
 
         vault.set(this, grant);
@@ -17,7 +24,7 @@ export class Client {
 
     account(credentials, ...args) {
         const grant = vault.get(this);
-        const c = grant.getCredentials ? grant.getCredentials(credentials, ...args) : credentials;
+        const c = grant.getCredentials(credentials, ...args);
         return (c instanceof Promise) ? c.then(cr => grant.createAccount(cr)) : grant.createAccount(c);
     }
 

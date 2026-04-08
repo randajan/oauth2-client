@@ -1,32 +1,36 @@
 import { RedirectError } from "../errors";
-import { extendURL, isValidURL, objFromBase64, objToBase64, validateFn, validateURL } from "../tools";
+import { extendURL, isValidURL, objFromBase64, objToBase64, validateFn, validateObj, validateStr, validateURL, wrapFnWith } from "../tools";
 import { Account } from "./Account";
+
 
 export class Grant {
 
     static name="";
-    static uidKey="";
+    static accIdKey="";
+    static reqClientId = true;
+    static reqClientSecret = true;
     static Account = Account;
 
     constructor(client, opt={}) {
-        const { name, uidKey } = this.constructor;
+        const { name, accIdKey, reqClientId, reqClientSecret } = this.constructor;
 
         this.client = client;
-        this.name = opt.name || name;
-        this.uidKey = opt.uidKey || uidKey;
+        this.name = name;
+        this.key = validateStr(false, opt.key, "options.key") || name;
+        this.accIdKey = validateStr(false, opt.accIdKey, "options.accIdKey") || accIdKey;
 
         this.isOffline = !!opt.isOffline;
-        this.clientId = opt.clientId;
-        this.clientSecret = opt.clientSecret;
+        this.clientId = validateStr(reqClientId, opt.clientId, "options.clientId");
+        this.clientSecret = validateStr(reqClientSecret, opt.clientSecret, "options.clientSecret");
 
         this.redirectUri = validateURL(true, opt.redirectUri, "options.redirectUri");
         this.fallbackUri = validateURL(true, opt.fallbackUri, "options.fallbackUri");
         this.landingUri = validateURL(false, opt.landingUri, "options.landingUri");
 
-        this.onAuth = validateFn(true, opt.onAuth, "options.onAuth");
-        this.onRenew = validateFn(true, opt.onRenew, "options.onRenew");
-        this.getCredentials = validateFn(false, opt.getCredentials, "options.getCredentials");
-        this.optExtra = (opt.extra || {});
+        this.onAuth = wrapFnWith(validateFn(true, opt.onAuth, "options.onAuth"), client);
+        this.onRenew = wrapFnWith(validateFn(true, opt.onRenew, "options.onRenew"), client);
+        this.getCredentials = wrapFnWith(validateFn(false, opt.getCredentials, "options.getCredentials") || ((_, c)=>c), client);
+        this.optExtra = validateObj(false, opt.extra, "options.extra") || {};
     }
 
     createAccount(credentials) {

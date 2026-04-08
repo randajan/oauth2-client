@@ -9,7 +9,7 @@ import { FacebookAccount } from "./FacebookAccount";
 export class FacebookGrant extends ScopeGrant {
 
     static name = "facebook";
-    static uidKey = "id";
+    static accIdKey = "id";
     static scopePrefix = "";
     static scopesCommon = [];
     static scopesNoPrefix = [];

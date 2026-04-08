@@ -1,6 +1,6 @@
 import { createHmac, randomBytes, timingSafeEqual } from "crypto";
 import { RedirectError } from "../errors";
-import { base64ToBase64Url, extendURL, isValidURL, strFromBase64Url, strToBase64Url, validateFn, validateStr, validateURL } from "../tools";
+import { base64ToBase64Url, extendURL, isValidURL, strFromBase64Url, strToBase64Url, validateFn, validateStr, validateURL, wrapFnWith } from "../tools";
 import { Grant } from "../class/Grant";
 import { MagicAccount } from "./MagicAccount";
 
@@ -8,17 +8,17 @@ import { MagicAccount } from "./MagicAccount";
 export class MagicGrant extends Grant {
 
     static name = "magic";
-    static uidKey = "id";
+    static accIdKey = "id";
+    static reqClientId = false;
     static Account = MagicAccount;
 
     constructor(client, opt = {}) {
         super(client, opt);
 
         this.magicUri = validateURL(false, opt.magicUri, "options.magicUri") || this.landingUri;
-        this.magicSecret = validateStr(true, opt.magicSecret, "options.magicSecret");
         this.magicTtlMs = this.parseTtl(opt.magicTtlMs, 600000, "options.magicTtlMs");
         this.accessTokenTtlMs = this.parseTtl(opt.accessTokenTtlMs, 86400000, "options.accessTokenTtlMs");
-        this.onMagic = validateFn(true, opt.onMagic, "options.onMagic");
+        this.onMagic = wrapFnWith(validateFn(true, opt.onMagic, "options.onMagic"), client);
         this.usedCodes = new Map();
     }
 
@@ -137,7 +137,7 @@ export class MagicGrant extends Grant {
     }
 
     sign(payloadEncoded) {
-        const digest = createHmac("sha256", this.magicSecret).update(payloadEncoded).digest();
+        const digest = createHmac("sha256", this.clientSecret).update(payloadEncoded).digest();
         return base64ToBase64Url(digest.toString("base64"));
     }
 

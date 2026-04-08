@@ -1,13 +1,6 @@
 
-export const sliceMap = (arr, size, callback) => {
-    size = Math.max(1, size) || 1;
-    const r = [];
-    if (!Array.isArray(arr)) { return r; }
-    for (let k = 0; k < arr.length; k += size) {
-        r.push(callback(arr.slice(k, k + size), r.length, size, arr.length));
-    }
-    return r;
-}
+export const hasOwn = (obj, key) => Object.prototype.hasOwnProperty.call(obj, key);
+
 
 export const extendURL = (url, query = {}) => {
     const u = new URL(url);
@@ -24,23 +17,61 @@ export const isValidURL = str => {
 }
 
 export const validateURL = (required, url, errProp) => {
-    if (!url && !required) { return; }
+    if (url == null && !required) { return; }
     if (isValidURL(url)) { return url; }
     throw new Error(`${errProp} is not a valid URL`);
 }
 
+const assertDeny = (list, obj, errProp) => {
+    if (!Array.isArray(list) || !list.length) { return obj; }
+    const denied = list.filter(item=>hasOwn(obj, item));
+    if (!denied.length) { return obj; }
+    throw new Error(`${errProp} contains denied keys: [${denied.join(",")}]`);
+}
+
+const assertAllow = (list, obj, errProp) => {
+    if (!Array.isArray(list) || !list.length) { return obj; }
+    const denied = new Set(Object.keys(obj));
+    for (const item of list) { denied.delete(item); }
+    if (!denied.size) { return obj; }
+    throw new Error(`${errProp} contains denied keys: [${[...denied].join(",")}]`);
+}
+
+export const validateObj = (required, obj, errProp) => {
+    if (obj == null && !required) { return; }
+    if (!obj || typeof obj !== "object" || Array.isArray(obj)) {
+        throw new Error(`${errProp} must be an object`);
+    }
+    return obj;
+}
+
+export const blacklistObj = (blacklist, required, obj, errProp)=>{
+    return assertDeny(blacklist, validateObj(required, obj, errProp), errProp);
+}
+
+export const whitelistObj = (whitelist, required, obj, errProp)=>{
+    return assertAllow(whitelist, validateObj(required, obj, errProp), errProp);
+}
+
 export const validateFn = (required, fn, errProp) => {
-    if (!fn && !required) { return; }
+    if (fn == null && !required) { return; }
     if (typeof fn === "function") { return fn; }
     throw new Error(`${errProp} is not a valid function`);
 }
 
 export const validateStr = (required, str, errProp) => {
-    if (!str && !required) { return; }
-    if (typeof str === "string") { return str; }
+    const isStr = typeof str === "string";
+    if (isStr) { str = str.trim(); }
+
+    if ((str == null || str === "") && !required) { return; }
+    if (isStr && str) { return str; }
+
     throw new Error(`${errProp} is not a valid string`);
 }
 
+export const wrapFnWith = (fn, ...withArguments)=>{
+    return (...a)=>fn(...withArguments, ...a);
+}
 
 export const formatCredentials = (credentials={}) => {
     const c = {...credentials};

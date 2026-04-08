@@ -19,8 +19,8 @@ export class Account {
 
     async uid() {
         const profile = await this.profile();
-        const { name, uidKey } = this.client;
-        const id = profile?.[uidKey];
+        const { name, accIdKey } = this.client;
+        const id = profile?.[accIdKey];
         if (id) { return `${name}:${id}`; }
     }
 

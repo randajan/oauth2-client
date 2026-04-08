@@ -3,8 +3,11 @@ import { SeznamAccount } from "./SeznamAccount";
 import { SeznamGrant } from "./SeznamGrant";
 
 
-export const createSeznamOAuth2 = (options={})=>new Client(SeznamGrant, options);
-export default createSeznamOAuth2;
+export class SeznamClient extends Client {
+    static Grant = SeznamGrant;
+}
+
+export default (options={})=>new SeznamClient(options);
 
 export {
     SeznamAccount,
