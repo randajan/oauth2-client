@@ -8,7 +8,7 @@ export class MagicAccount extends Account {
         const { grant } = this;
         const { access_token } = this.credentials;
         const payload = grant.readAccessToken(access_token);
-        return { [grant.accIdKey]: payload.sub };
+        return { [grant.accountId]: payload.sub };
     }
 
     async tokens() {

@@ -22,6 +22,7 @@ export const validateURL = (required, url, errProp) => {
     throw new Error(`${errProp} is not a valid URL`);
 }
 
+
 const assertDeny = (list, obj, errProp) => {
     if (!Array.isArray(list) || !list.length) { return obj; }
     const denied = list.filter(item=>hasOwn(obj, item));
@@ -70,15 +71,9 @@ export const validateStr = (required, str, errProp) => {
 }
 
 export const validateTtl = (required, ttl, errProp) => {
-    const isNum = typeof ttl === "number";
     if ((ttl == null || ttl === 0) && !required) { return; }
-
     if (typeof ttl === "number" && Number.isFinite(ttl)) { return Math.floor(ttl); }
-    throw new Error(`${propName} must be a positive number`);
-}
-
-export const wrapFnWith = (fn, ...withArguments)=>{
-    return (...a)=>fn(...withArguments, ...a);
+    throw new Error(`${errProp} must be a positive number`);
 }
 
 export const formatCredentials = (credentials={}) => {

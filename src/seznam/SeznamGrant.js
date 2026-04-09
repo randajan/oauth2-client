@@ -8,7 +8,7 @@ import { SeznamAccount } from "./SeznamAccount";
 export class SeznamGrant extends ScopeGrant {
 
     static name = "seznam";
-    static accIdKey = "email";
+    static accountId = "email";
     static scopePrefix = "";                 // Seznam prefix nepoužívá
     static scopesCommon = ["identity"];      // povinný scope
     static scopesNoPrefix = [];              // nic zvláštního

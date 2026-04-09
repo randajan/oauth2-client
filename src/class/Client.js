@@ -1,37 +1,30 @@
 import { virtual } from "@randajan/props";
 import { vault } from "../consts";
 import { RedirectError } from "../errors";
-import { validateStr, validateFn, whitelistObj, blacklistObj } from "../tools";
+import { validateStr, validateFn, blacklistObj, validateObj } from "../tools";
 import { Grant } from "./Grant";
 
-const LOCAL_BLACKLIST = [ "onAuth", "onRenew", "onMagic" ];
-const GLOBAL_WHITELIST = [ "providers", "landingUri", "fallbackUri", ...LOCAL_BLACKLIST ];
+const LOCAL_BLACKLIST = [ "client", "onAuth", "onRenew", "onMagic" ];
 
 export class Client {
 
     static is(any) { return any instanceof Client; }
 
-    constructor(options={}) {
+    constructor(grantProviders=[], optionsFactory=(grantKey, grantName)=>({})) {
         const _p = {};
 
-        const opt = {...whitelistObj(GLOBAL_WHITELIST, true, options, "options")};
-        const providers = opt.providers;
-        delete opt.providers;
-
-        opt.onAuth = validateFn(true, opt.onAuth, "options.onAuth");
-        opt.onRenew = validateFn(true, opt.onRenew, "options.onRenew");
-
+        _p.factory = validateFn(false, optionsFactory, "optionsFactory");
         _p.providers = new Map();
         _p.grants = new Map();
-        _p.options = opt;
 
-        if (!Array.isArray(providers) || !providers.length) {
-            throw new Error("options.providers must be a non-empty array");
+
+        if (!Array.isArray(grantProviders) || !grantProviders.length) {
+            throw new Error("grantProviders must be a non-empty array");
         }
 
-        for (const provider of providers) {
+        for (const provider of grantProviders) {
             if (!Grant.isClass(provider)) {
-                throw new Error("options.providers must contain Grant subclasses");
+                throw new Error("grantProviders must contain Grant subclasses");
             }
             const grantName = validateStr(true, provider.name, "Grant.name");
             if (_p.providers.has(grantName)) {
@@ -54,12 +47,12 @@ export class Client {
         if (!Grant) { throw new Error(`Unknown OAuth grant '${name}'`); }
 
         const local = blacklistObj(LOCAL_BLACKLIST, false, options, "options") || {};
-        const grant = new Grant({ ..._p.options, ...local, client:this });
+        const key = validateStr(false, local.key, "options.key") || name;
+        if (_p.grants.has(key)) { throw new Error(`OAuth grant key '${key}' is already in use`); }
 
-        if (_p.grants.has(grant.key)) {
-            throw new Error(`OAuth grant key '${grant.key}' is already in use`);
-        }
-
+        const computed = validateObj(true, _p.factory(key, name), "optionsFactory result");
+        
+        const grant = new Grant({ ...computed, ...local, client:this, key });
         _p.grants.set(grant.key, grant);
         return grant;
     }

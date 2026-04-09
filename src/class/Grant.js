@@ -1,6 +1,6 @@
 import { solids } from "@randajan/props";
 import { RedirectError } from "../errors";
-import { extendURL, isValidURL, objFromBase64, objToBase64, validateFn, validateObj, validateStr, validateURL, wrapFnWith } from "../tools";
+import { extendURL, isValidURL, objFromBase64, objToBase64, validateFn, validateObj, validateStr, validateURL } from "../tools";
 import { Account } from "./Account";
 import { Client } from "./Client";
 
@@ -10,14 +10,14 @@ export class Grant {
     static isClass(Class) { return typeof Class === "function" && (Class === Grant || Class.prototype instanceof Grant); }
 
     static name="";
-    static accIdKey="";
+    static accountId="";
     static reqClientId = true;
     static reqClientSecret = true;
     static Account = Account;
 
     constructor(opt={}) {
-        const { name, accIdKey, reqClientId, reqClientSecret, Account } = this.constructor;
-        const { client } = opt;
+        const { name, accountId, reqClientId, reqClientSecret, Account } = this.constructor;
+        const { client, key } = opt;
 
         if (client != null && !Client.is(client)) {
             throw new Error("options.client must be an instance of Client");
@@ -27,16 +27,16 @@ export class Grant {
             client,
             Account,
             name,
-            key:validateStr(false, opt.key, "options.key") || name,
-            accIdKey:validateStr(false, opt.accIdKey, "options.accIdKey") || accIdKey,
+            key,
+            accountId:validateStr(false, opt.accountId, "options.accountId") || accountId,
             isOffline:!!opt.isOffline,
             clientId: validateStr(reqClientId, opt.clientId, "options.clientId"),
             clientSecret: validateStr(reqClientSecret, opt.clientSecret, "options.clientSecret"),
             redirectUri: validateURL(true, opt.redirectUri, "options.redirectUri"),
             fallbackUri: validateURL(true, opt.fallbackUri, "options.fallbackUri"),
             landingUri: validateURL(false, opt.landingUri, "options.landingUri"),
-            onAuth: wrapFnWith(validateFn(true, opt.onAuth, "options.onAuth"), this),
-            onRenew: wrapFnWith(validateFn(true, opt.onRenew, "options.onRenew"), this),
+            onAuth: validateFn(true, opt.onAuth, "options.onAuth"),
+            onRenew: validateFn(true, opt.onRenew, "options.onRenew"),
             extra: Object.freeze(validateObj(false, opt.extra, "options.extra") || {}),
         });
 

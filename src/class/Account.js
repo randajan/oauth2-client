@@ -22,8 +22,8 @@ export class Account {
 
     async uid() {
         const profile = await this.profile();
-        const { name, accIdKey } = this.grant;
-        const id = profile?.[accIdKey];
+        const { name, accountId } = this.grant;
+        const id = profile?.[accountId];
         if (id) { return `${name}:${id}`; }
     }
 

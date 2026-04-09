@@ -1,6 +1,6 @@
 import { createHmac, randomBytes, timingSafeEqual } from "crypto";
 import { RedirectError } from "../errors";
-import { base64ToBase64Url, extendURL, isValidURL, strFromBase64Url, strToBase64Url, validateFn, validateStr, validateTtl, validateURL, wrapFnWith } from "../tools";
+import { base64ToBase64Url, extendURL, isValidURL, strFromBase64Url, strToBase64Url, validateFn, validateTtl, validateURL } from "../tools";
 import { Grant } from "../class/Grant";
 import { MagicAccount } from "./MagicAccount";
 import { solids } from "@randajan/props";
@@ -9,7 +9,7 @@ import { solids } from "@randajan/props";
 export class MagicGrant extends Grant {
 
     static name = "magic";
-    static accIdKey = "id";
+    static accountId = "id";
     static reqClientId = false;
     static Account = MagicAccount;
 
@@ -20,12 +20,23 @@ export class MagicGrant extends Grant {
             magicUri:validateURL(false, opt.magicUri, "options.magicUri") || this.landingUri,
             magicTtlMs: validateTtl(false, opt.magicTtlMs, "options.magicTtlMs") || 600000,
             accessTokenTtlMs: validateTtl(false, opt.accessTokenTtlMs, "options.accessTokenTtlMs") || 86400000,
-            onMagic: wrapFnWith(validateFn(true, opt.onMagic, "options.onMagic"), this),
+            onMagic: validateFn(true, opt.onMagic, "options.onMagic"),
             usedCodes: new Map(),
         });
     }
 
-    async getInitAuthURL(options = {}) {
+    _generateAuthUrl(userId, state, extra={}) {
+        const { redirectUri, magicTtlMs } = this;
+
+        if (typeof userId !== "string" || userId === "") {
+            throw new RedirectError(12, "Bad request. Missing 'userId'");
+        }
+
+        const { token:code } = this.createToken("magic_code", userId, magicTtlMs);
+        return extendURL(redirectUri, { code, state });
+    }
+
+    async _resolveInitAuthURL(options = {}) {
         const { magicUri, onMagic } = this;
         const { landingUri, state:stateObj, userId, extra } = options;
 
@@ -46,20 +57,9 @@ export class MagicGrant extends Grant {
         throw new RedirectError(11, "Bad request. options.onMagic must return valid URL");
     }
 
-    _generateAuthUrl(userId, state, extra={}) {
-        const { redirectUri, magicTtlMs } = this;
-
-        if (typeof userId !== "string" || userId === "") {
-            throw new RedirectError(12, "Bad request. Missing 'userId'");
-        }
-
-        const { token:code } = this.createToken("magic_code", userId, magicTtlMs);
-        return extendURL(redirectUri, { code, state });
-    }
-
     async _swapCodeForTokens(code) {
         const payload = this.readToken(code, "magic_code");
-        const isNew = this.trackUsedCode(code);
+        const isNew = this._trackUsedCode(code);
         if (!isNew) {
             throw new RedirectError(19, "Magic code has already been used");
         }
@@ -136,7 +136,7 @@ export class MagicGrant extends Grant {
         return base64ToBase64Url(digest.toString("base64"));
     }
 
-    trackUsedCode(code) {
+    _trackUsedCode(code) {
         if (this.usedCodes.has(code)) { return false; }
 
         const timeout = setTimeout(() => {
