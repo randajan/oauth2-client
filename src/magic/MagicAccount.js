@@ -4,19 +4,15 @@ import { vault } from "../consts";
 
 export class MagicAccount extends Account {
 
-    async profile() {
+    async _resolveProfile() {
         const { grant } = this;
         const { access_token } = this.credentials;
         const payload = grant.readAccessToken(access_token);
-        return { [grant.accountId]: payload.sub };
+        return { id: payload.sub };
     }
 
-    async tokens() {
+    async _resolveTokens() {
         return this.credentials;
-    }
-
-    async scopes() {
-        return [];
     }
 
 }

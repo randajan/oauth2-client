@@ -1,5 +1,6 @@
 import { solid, virtuals } from "@randajan/props";
 import { Grant } from "./Grant";
+import { validateArr } from "../tools";
 
 export class ScopeGrant extends Grant {
 
@@ -11,7 +12,8 @@ export class ScopeGrant extends Grant {
         super(opt);
 
         const { scopePrefix, scopesCommon, scopesNoPrefix } = this.constructor;
-        const scopesRequired = this._effaceScopes([...scopesCommon, ...(opt.scopes || [])]);
+        const optScopes = validateArr(false, opt.scopes, "options.scopes") || [];
+        const scopesRequired = this._effaceScopes([...scopesCommon, ...optScopes]);
 
         solid(this, "scopePrefix", scopePrefix);
 

@@ -10,7 +10,6 @@ import { solid } from "@randajan/props";
 export class FacebookGrant extends ScopeGrant {
 
     static name = "facebook";
-    static accountId = "id";
     static scopePrefix = "";
     static scopesCommon = [];
     static scopesNoPrefix = [];

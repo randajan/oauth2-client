@@ -4,30 +4,30 @@ import { vault } from "../consts";
 
 export class FacebookAccount extends Account {
 
-    async profile(fields = ["id", "name", "email", "picture"]) {
+    async _resolveProfile(fields = ["id", "name", "email", "picture"]) {
         const { grant } = this;
         const { access_token } = this.credentials;
 
-        return grant.fetchApi(`/me`, {
+        return grant._fetchApi(`/me`, {
             access_token,
             fields: fields.join(",")
-        }, 3);
+        });
     }
 
-    async tokens() {
+    async _resolveTokens() {
         return this.credentials;
     }
 
-    async scopes() {
+    async _resolveScopes() {
         const { grant } = this;
         const { access_token } = this.credentials;
 
-        const { data } = await grant.fetchApi("/me/permisssions", {
+        const { data } = await grant._fetchApi("/me/permissions", {
             access_token
-        }, 3);
+        });
 
         // /me/permissions vrací [{permission, status}, …]
-        return super.scopes(data.filter(p => p.status === "granted").map(p => p.permission));
+        return data.filter(p => p.status === "granted").map(p => p.permission);
     }
 
 }

@@ -38,6 +38,12 @@ const assertAllow = (list, obj, errProp) => {
     throw new Error(`${errProp} contains denied keys: [${[...denied].join(",")}]`);
 }
 
+export const validateArr = (required, arr, errProp)=>{
+    if (arr == null && !required) { return; }
+    if (Array.isArray(arr) && arr.length > 0) { return arr; }
+    throw new Error(`${errProp} is not a valid array`);
+}
+
 export const validateObj = (required, obj, errProp) => {
     if (obj == null && !required) { return; }
     if (!obj || typeof obj !== "object" || Array.isArray(obj)) {
@@ -72,12 +78,12 @@ export const validateStr = (required, str, errProp) => {
 
 export const validateTtl = (required, ttl, errProp) => {
     if ((ttl == null || ttl === 0) && !required) { return; }
-    if (typeof ttl === "number" && Number.isFinite(ttl)) { return Math.floor(ttl); }
+    if (typeof ttl === "number" && Number.isFinite(ttl) && ttl > 0) { return Math.floor(ttl); }
     throw new Error(`${errProp} must be a positive number`);
 }
 
 export const formatCredentials = (credentials={}) => {
-    const c = {...credentials};
+    const c = {...validateObj(true, credentials, "credentials")};
 
     if (c.expires_in && !c.expiry_date) {
         c.expiry_date = Date.now() + c.expires_in * 1000;

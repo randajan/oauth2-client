@@ -10,13 +10,12 @@ export class Grant {
     static isClass(Class) { return typeof Class === "function" && (Class === Grant || Class.prototype instanceof Grant); }
 
     static name="";
-    static accountId="";
     static reqClientId = true;
     static reqClientSecret = true;
     static Account = Account;
 
     constructor(opt={}) {
-        const { name, accountId, reqClientId, reqClientSecret, Account } = this.constructor;
+        const { name, reqClientId, reqClientSecret, Account } = this.constructor;
         const { client, key } = opt;
 
         if (client != null && !Client.is(client)) {
@@ -27,14 +26,14 @@ export class Grant {
             client,
             Account,
             name,
-            key,
-            accountId:validateStr(false, opt.accountId, "options.accountId") || accountId,
+            key:validateStr(false, key, "options.key") || name,
             isOffline:!!opt.isOffline,
             clientId: validateStr(reqClientId, opt.clientId, "options.clientId"),
             clientSecret: validateStr(reqClientSecret, opt.clientSecret, "options.clientSecret"),
             redirectUri: validateURL(true, opt.redirectUri, "options.redirectUri"),
             fallbackUri: validateURL(true, opt.fallbackUri, "options.fallbackUri"),
             landingUri: validateURL(false, opt.landingUri, "options.landingUri"),
+            formatProfile: validateFn(false, opt.formatProfile, "options.formatProfile") || (p=>p),
             onAuth: validateFn(true, opt.onAuth, "options.onAuth"),
             onRenew: validateFn(true, opt.onRenew, "options.onRenew"),
             extra: Object.freeze(validateObj(false, opt.extra, "options.extra") || {}),

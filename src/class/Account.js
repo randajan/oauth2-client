@@ -6,41 +6,39 @@ import { formatCredentials } from "../tools";
 
 export class Account {
 
-    static create(grant, credentials={}) {
-        return new this(grant, credentials);
-    }
-
     constructor(grant, credentials={}) {
-
-        credentials = formatCredentials(credentials);
 
         solids(this, {
             grant,
-            credentials
+            credentials:formatCredentials(credentials)
         }, false);
     }
 
-    async uid() {
-        const profile = await this.profile();
-        const { name, accountId } = this.grant;
-        const id = profile?.[accountId];
-        if (id) { return `${name}:${id}`; }
-    }
-
-    async profile() {
+    async _resolveProfile(...args) {
         return {};
     }
 
-    async tokens() {
+    async _resolveTokens(...args) {
         return {};
     }
 
-    async scopes(scopes) {
+    async _resolveScopes(...args) {
+        return [];
+    }
+
+    async profile(...args) {
+        return this.grant.formatProfile(await this._resolveProfile(...args));
+    }
+
+    async tokens(...args) {
+        return this._resolveTokens(...args);
+    }
+
+    async scopes(...args) {
        const { grant } = this;
 
         if (typeof grant._effaceScopes !== "function") { return []; }
-
-        return grant._effaceScopes(scopes);
+        return grant._effaceScopes(await this._resolveScopes(...args));
     }
 
 }

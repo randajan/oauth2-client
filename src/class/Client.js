@@ -1,7 +1,7 @@
 import { virtual } from "@randajan/props";
 import { vault } from "../consts";
 import { RedirectError } from "../errors";
-import { validateStr, validateFn, blacklistObj, validateObj } from "../tools";
+import { validateStr, validateFn, blacklistObj, validateObj, validateArr } from "../tools";
 import { Grant } from "./Grant";
 
 const LOCAL_BLACKLIST = [ "client", "onAuth", "onRenew", "onMagic" ];
@@ -17,10 +17,7 @@ export class Client {
         _p.providers = new Map();
         _p.grants = new Map();
 
-
-        if (!Array.isArray(grantProviders) || !grantProviders.length) {
-            throw new Error("grantProviders must be a non-empty array");
-        }
+        grantProviders = validateArr(true, grantProviders, "grantProviders");
 
         for (const provider of grantProviders) {
             if (!Grant.isClass(provider)) {
@@ -77,11 +74,11 @@ export class Client {
     }
 
     async getInitAuthURL(grantKey, options = {}) {
-        return this.get(grantKey, true)._resolveInitAuthURL(options);
+        return this.get(grantKey, true).getInitAuthURL(options);
     }
 
     async getExitAuthURL(grantKey, { code, state }, context) {
-        return this.get(grantKey, true)._resolveExitAuthURL({ code, state }, context);
+        return this.get(grantKey, true).getExitAuthURL({ code, state }, context);
     }
 
 }

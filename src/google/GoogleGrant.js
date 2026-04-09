@@ -6,7 +6,6 @@ import { solid } from "@randajan/props";
 export class GoogleGrant extends ScopeGrant {
 
     static name="google";
-    static uidKey="id";
     static scopePrefix="https://www.googleapis.com/auth/";
     static scopesCommon=["openid", "userinfo.profile", "userinfo.email"];
     static scopesNoPrefix=["openid"];

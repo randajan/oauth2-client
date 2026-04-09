@@ -21,17 +21,47 @@ const oauth = new Client(
             console.log(`${grantKey} link for ${userId}: ${confirmUrl}`);
         },
         onAuth: async (account, { state }) => {
-            console.log(grantKey, state, await account.uid(), await account.profile());
+            console.log(grantKey, state, await account.profile());
         },
-        onRenew: async (grantKey, account) => {
+        onRenew: async (account) => {
 
         }
     })
 );
 
-oauth.add("google", env.google);
-oauth.add("seznam", env.seznam);
-oauth.add("facebook", env.facebook);
-oauth.add("magic", env.magic);
+oauth.add("google", {
+    ...env.google,
+    formatProfile:({email, name, picture})=>({
+        id:`google:${email}`,
+        email,
+        name,
+        avatar:picture
+    })
+});
+
+oauth.add("seznam", {
+    ...env.seznam,
+    formatProfile:({email, firstname, lastname})=>({
+        id:`seznam:${email}`,
+        email,
+        name:`${firstname} ${lastname}`,
+    })
+});
+
+oauth.add("facebook", {
+    ...env.facebook,
+    formatProfile:(p)=>({
+        id:`facebook:${p.email}`,
+        ...p
+    })
+});
+
+oauth.add("magic", {
+    ...env.magic,
+    formatProfile:(p)=>({
+        id:`magic:${p.id}`,
+        email:p.id
+    })
+});
 
 export default oauth;

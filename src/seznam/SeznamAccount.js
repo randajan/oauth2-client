@@ -4,7 +4,7 @@ import { Account } from "../class/Account";
 
 export class SeznamAccount extends Account {
 
-    async profile() {
+    async _resolveProfile() {
         const { grant } = this;
         const { access_token } = this.credentials;
 
@@ -13,15 +13,12 @@ export class SeznamAccount extends Account {
         });
     }
 
-    async tokens() {
+    async _resolveTokens() {
         return this.credentials;
     }
 
-    async scopes() {
-        if (this.credentials?.scopes) {
-            return super.scopes(this.credentials.scopes);
-        }
-        return [];
+    async _resolveScopes() {
+        return this.credentials.scopes;
     }
 
 }

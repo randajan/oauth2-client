@@ -9,7 +9,6 @@ import { solids } from "@randajan/props";
 export class MagicGrant extends Grant {
 
     static name = "magic";
-    static accountId = "id";
     static reqClientId = false;
     static Account = MagicAccount;
 
@@ -37,14 +36,14 @@ export class MagicGrant extends Grant {
     }
 
     async _resolveInitAuthURL(options = {}) {
-        const { magicUri, onMagic } = this;
+        const { magicUri, onMagic, magicTtlMs } = this;
         const { landingUri, state:stateObj, userId, extra } = options;
 
         const state = this._serializeState(stateObj, landingUri);
-
         const confirmUrl = this._generateAuthUrl(userId, state, extra || {});
 
         const customUrl = await onMagic(confirmUrl, {
+            ttl:magicTtlMs,
             magicUri,
             userId,
             state,
