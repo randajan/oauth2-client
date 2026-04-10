@@ -11,10 +11,10 @@ const beUrl = `http://localhost:${info.ports.server}`;
 
     const root = document.getElementById("root");
 
-    for (const grantKey of list) {
+    for (const { key, initUri } of list) {
         const el = document.createElement("a");
-        el.innerText = `Log me via ${grantKey[0].toUpperCase()}${grantKey.slice(1)}`;
-        el.href = `${beUrl}/oauth/${grantKey}/init?state=foo&userId=jan.randa%40itcan.cz`;
+        el.innerText = `Log me via ${key[0].toUpperCase()}${key.slice(1)}`;
+        el.href = `${initUri}?state=foo&userId=jan.randa%40itcan.cz`;
         root.appendChild(el);
     }
 

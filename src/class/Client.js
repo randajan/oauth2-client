@@ -1,10 +1,9 @@
 import { virtual } from "@randajan/props";
 import { vault } from "../consts";
-import { RedirectError } from "../errors";
 import { validateStr, validateFn, blacklistObj, validateObj, validateArr } from "../tools";
 import { Grant } from "./Grant";
 
-const LOCAL_BLACKLIST = [ "client", "onAuth", "onRenew", "onMagic" ];
+const LOCAL_BLACKLIST = [ "client", "onAuth", "onRenew", "onMagic", "onError" ];
 
 export class Client {
 
@@ -66,19 +65,14 @@ export class Client {
         const grant = _p.grants.get(grantKey);
         if (grant) { return grant; }
         if (!throwError) { return; }
-        throw new RedirectError(1, `Unknown OAuth grant '${grantKey}'`);
+        throw new Error(`Unknown OAuth grant '${grantKey}'`);
     }
 
     account(grantKey, credentials={}) {
         return this.get(grantKey, true).account(credentials);
     }
 
-    async getInitAuthURL(grantKey, options = {}) {
-        return this.get(grantKey, true).getInitAuthURL(options);
+    setupRoutes(callback) {
+        this.grants.forEach(callback);
     }
-
-    async getExitAuthURL(grantKey, { code, state }, context) {
-        return this.get(grantKey, true).getExitAuthURL({ code, state }, context);
-    }
-
 }

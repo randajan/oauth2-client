@@ -18,12 +18,13 @@ export class GoogleGrant extends ScopeGrant {
     }
 
     _createAuth() {
-        const { extra, clientId, clientSecret, redirectUri } = this;
+        const { extra, clientId, clientSecret, exitUri:redirectUri } = this;
         return new google.auth.OAuth2({ ...extra, clientId, clientSecret, redirectUri });
     }
 
     _generateAuthUrl(scope, state, extra) {
         return this.auth.generateAuthUrl({
+            prompt: "select_account",
             ...extra,
             access_type: this.isOffline ? "offline" : "online",
             scope,

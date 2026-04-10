@@ -1,4 +1,6 @@
 
+import { createHmac, timingSafeEqual } from "crypto";
+
 export const hasOwn = (obj, key) => Object.prototype.hasOwnProperty.call(obj, key);
 
 
@@ -20,6 +22,10 @@ export const validateURL = (required, url, errProp) => {
     if (url == null && !required) { return; }
     if (isValidURL(url)) { return url; }
     throw new Error(`${errProp} is not a valid URL`);
+}
+
+export const wrapValidatorURL = (validator)=>{
+    return (u, ...a)=>isValidURL(u) && (true === validator(u, ...a));
 }
 
 
@@ -118,5 +124,43 @@ export const base64UrlToBase64 = str => {
 export const strToBase64Url = str => base64ToBase64Url(strToBase64(str));
 export const strFromBase64Url = strEncoded => strFromBase64(base64UrlToBase64(strEncoded));
 
-export const objToBase64 = obj => strToBase64(JSON.stringify(obj));
-export const objFromBase64 = objEncoded => JSON.parse(strFromBase64(objEncoded));
+export const signBase64Url = (payloadEncoded, secret) => {
+    const digest = createHmac("sha256", validateStr(true, secret, "secret"))
+        .update(validateStr(true, payloadEncoded, "payloadEncoded"))
+        .digest();
+
+    return base64ToBase64Url(digest.toString("base64"));
+}
+
+export const objToSignedBase64Url = (obj, secret) => {
+    const payloadEncoded = strToBase64Url(JSON.stringify(obj));
+    const signature = signBase64Url(payloadEncoded, secret);
+    return `${payloadEncoded}.${signature}`;
+}
+
+export const objFromSignedBase64Url = (token, secret) => {
+    if (!token || typeof token !== "string") {
+        throw new Error("Invalid signed payload format");
+    }
+
+    const parts = token.split(".");
+    if (parts.length !== 2 || !parts[0] || !parts[1]) {
+        throw new Error("Invalid signed payload format");
+    }
+
+    const [ payloadEncoded, signature ] = parts;
+    const signatureExpected = signBase64Url(payloadEncoded, secret);
+
+    const given = Buffer.from(signature, "utf8");
+    const expected = Buffer.from(signatureExpected, "utf8");
+
+    if (given.length !== expected.length || !timingSafeEqual(given, expected)) {
+        throw new Error("Invalid signed payload signature");
+    }
+
+    try {
+        return JSON.parse(strFromBase64Url(payloadEncoded));
+    } catch (err) {
+        throw new Error("Invalid signed payload");
+    }
+}

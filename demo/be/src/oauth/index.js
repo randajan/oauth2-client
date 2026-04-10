@@ -13,10 +13,11 @@ const feUrl = `http://localhost:${info.ports.client}`;
 const oauth = new Client(
     [FacebookGrant, GoogleGrant, MagicGrant, SeznamGrant],
     (grantKey, grantName)=>({
-        redirectUri:`${beUrl}/oauth/${grantKey}/exit`,
-        fallbackUri: `${feUrl}/${grantKey}/error`,
+        initUri:`${beUrl}/oauth/${grantKey}/init`,
+        exitUri:`${beUrl}/oauth/${grantKey}/exit`,
         landingUri: `${feUrl}/${grantKey}/ok`,
-        magicUri:`${feUrl}/${grantKey}/pending`,
+        pendingUri: `${feUrl}/${grantKey}/pending`,
+        failureUri: `${feUrl}/${grantKey}/error`,
         onMagic: async (confirmUrl, { userId }) => {
             console.log(`${grantKey} link for ${userId}: ${confirmUrl}`);
         },
@@ -25,6 +26,9 @@ const oauth = new Client(
         },
         onRenew: async (account) => {
 
+        },
+        onError: async (err, { errorCode })=>{
+            console.log("OAUTH ERROR", errorCode);
         }
     })
 );

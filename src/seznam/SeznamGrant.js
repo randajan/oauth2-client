@@ -39,7 +39,7 @@ export class SeznamGrant extends ScopeGrant {
     }
 
     _generateAuthUrl(scope, state, extra) {
-        const { clientId, redirectUri, isOffline } = this;
+        const { clientId, exitUri, isOffline } = this;
 
         const access_type = isOffline ? "offline" : "";
 
@@ -48,21 +48,21 @@ export class SeznamGrant extends ScopeGrant {
             access_type,
             response_type: "code",
             client_id: clientId,
-            redirect_uri: redirectUri,
+            redirect_uri: exitUri,
             scope: scope.join(","),          // Seznam odděluje čárkou
             state,
         });
     }
 
     async _swapCodeForTokens(code) {
-        const { clientId, clientSecret, redirectUri } = this;
+        const { clientId, clientSecret, exitUri } = this;
 
         return this._fetchApiPost("/oauth/token", {
             grant_type: "authorization_code",
             code,
             client_id: clientId,
             client_secret: clientSecret,
-            redirect_uri: redirectUri
+            redirect_uri: exitUri
         }, 2);
 
     }

@@ -53,17 +53,18 @@ export class ScopeGrant extends Grant {
         return [...r];
     }
 
-    _generateAuthUrl(scope, state, extra={}) {
+    _generateAuthUrl(effacedScopes, signedState, extra={}) {
 
     }
 
-    async _resolveInitAuthURL(options={}) {
-        const { landingUri, state:stateObj, scopes, extra } = options;
+    async _resolveInitURL(query = {}, options = {}) {
+        const { state, landingUri } = query;
+        const { scopes, extra } = options;
 
-        const state = this._serializeState(stateObj, landingUri);
-        const scope = this._effaceScopes(scopes, true, true);
+        const signedState = this._signState(state, landingUri);
+        const effacedScopes = this._effaceScopes(scopes, true, true);
 
-        return this._generateAuthUrl(scope, state, extra || {});
+        return this._generateAuthUrl(effacedScopes, signedState, extra || {});
     }
 
 }

@@ -1,6 +1,6 @@
-import { createHmac, randomBytes, timingSafeEqual } from "crypto";
+import { randomBytes } from "crypto";
 import { RedirectError } from "../errors";
-import { base64ToBase64Url, extendURL, isValidURL, strFromBase64Url, strToBase64Url, validateFn, validateTtl, validateURL } from "../tools";
+import { extendURL, isValidURL, objFromSignedBase64Url, objToSignedBase64Url, validateFn, validateTtl, validateURL } from "../tools";
 import { Grant } from "../class/Grant";
 import { MagicAccount } from "./MagicAccount";
 import { solids } from "@randajan/props";
@@ -16,7 +16,7 @@ export class MagicGrant extends Grant {
         super(opt);
 
         solids(this, {
-            magicUri:validateURL(false, opt.magicUri, "options.magicUri") || this.landingUri,
+            pendingUri:validateURL(false, opt.pendingUri, "options.pendingUri") || this.landingUri,
             magicTtlMs: validateTtl(false, opt.magicTtlMs, "options.magicTtlMs") || 600000,
             accessTokenTtlMs: validateTtl(false, opt.accessTokenTtlMs, "options.accessTokenTtlMs") || 86400000,
             onMagic: validateFn(true, opt.onMagic, "options.onMagic"),
@@ -25,32 +25,33 @@ export class MagicGrant extends Grant {
     }
 
     _generateAuthUrl(userId, state, extra={}) {
-        const { redirectUri, magicTtlMs } = this;
+        const { exitUri, magicTtlMs } = this;
 
         if (typeof userId !== "string" || userId === "") {
             throw new RedirectError(12, "Bad request. Missing 'userId'");
         }
 
         const { token:code } = this.createToken("magic_code", userId, magicTtlMs);
-        return extendURL(redirectUri, { code, state });
+        return extendURL(exitUri, { code, state });
     }
 
-    async _resolveInitAuthURL(options = {}) {
-        const { magicUri, onMagic, magicTtlMs } = this;
-        const { landingUri, state:stateObj, userId, extra } = options;
+    async _resolveInitURL(query = {}, options = {}) {
+        const { pendingUri, onMagic, magicTtlMs } = this;
+        const { state, userId, landingUri } = query;
+        const { extra } = options;
 
-        const state = this._serializeState(stateObj, landingUri);
-        const confirmUrl = this._generateAuthUrl(userId, state, extra || {});
+        const signedState = this._signState(state, landingUri);
+        const confirmUrl = this._generateAuthUrl(userId, signedState, extra || {});
 
         const customUrl = await onMagic(confirmUrl, {
             ttl:magicTtlMs,
-            magicUri,
+            pendingUri,
             userId,
             state,
             extra: { ...extra }
         });
 
-        if (customUrl == null) { return extendURL(magicUri, { userId }); }
+        if (customUrl == null) { return extendURL(pendingUri, { userId }); }
         if (isValidURL(customUrl)) { return customUrl; }
 
         throw new RedirectError(11, "Bad request. options.onMagic must return valid URL");
@@ -79,25 +80,16 @@ export class MagicGrant extends Grant {
             throw new RedirectError(13, `Bad request. Missing '${type}' token`);
         }
 
-        const parts = token.split(".");
-        if (parts.length !== 2 || !parts[0] || !parts[1]) {
-            throw new RedirectError(14, "Invalid token format");
-        }
-
-        const [ payloadEncoded, signature ] = parts;
-        const signatureExpected = this.sign(payloadEncoded);
-
-        const given = Buffer.from(signature, "utf8");
-        const expected = Buffer.from(signatureExpected, "utf8");
-
-        if (given.length !== expected.length || !timingSafeEqual(given, expected)) {
-            throw new RedirectError(15, "Invalid token signature");
-        }
-
         let payload;
         try {
-            payload = JSON.parse(strFromBase64Url(payloadEncoded));
+            payload = objFromSignedBase64Url(token, this.clientSecret);
         } catch (err) {
+            if (err.message === "Invalid signed payload format") {
+                throw new RedirectError(14, "Invalid token format");
+            }
+            if (err.message === "Invalid signed payload signature") {
+                throw new RedirectError(15, "Invalid token signature");
+            }
             throw new RedirectError(16, "Invalid token payload");
         }
 
@@ -125,14 +117,7 @@ export class MagicGrant extends Grant {
             exp: iat + ttlMs,
             rnd: randomBytes(12).toString("hex")
         };
-        const payloadEncoded = strToBase64Url(JSON.stringify(payload));
-        const signature = this.sign(payloadEncoded);
-        return { token: `${payloadEncoded}.${signature}`, payload };
-    }
-
-    sign(payloadEncoded) {
-        const digest = createHmac("sha256", this.clientSecret).update(payloadEncoded).digest();
-        return base64ToBase64Url(digest.toString("base64"));
+        return { token: objToSignedBase64Url(payload, this.clientSecret), payload };
     }
 
     _trackUsedCode(code) {

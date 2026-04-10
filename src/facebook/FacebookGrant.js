@@ -37,25 +37,25 @@ export class FacebookGrant extends ScopeGrant {
     }
 
     _generateAuthUrl(scope, state, extra) {
-        const { clientId, redirectUri } = this;
+        const { clientId, exitUri } = this;
 
         return this._createApiUrl("www", `/dialog/oauth`, {
             ...extra,
             response_type: "code",
             client_id: clientId,
-            redirect_uri: redirectUri,
+            redirect_uri: exitUri,
             scope: scope.join(","),                 // FB odděluje čárkou
             state
         });
     }
 
     async _swapCodeForTokens(code) {
-        const { clientId, clientSecret, redirectUri } = this;
+        const { clientId, clientSecret, exitUri } = this;
 
         return this._fetchApi(`/oauth/access_token`, {
             client_id: clientId,
             client_secret: clientSecret,
-            redirect_uri: redirectUri,
+            redirect_uri: exitUri,
             code
         });
 

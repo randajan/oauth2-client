@@ -9,23 +9,20 @@ const app = express();
 app.use(cors());
 
 app.get("/oauth", async (req, res)=>{
-    res.json([...oauth.grants.keys()]);
+    res.json([...oauth.grants.values()].map(({ key, initUri })=>({ key, initUri })));
 });
 
-oauth.grants.forEach(grant=>{
+oauth.setupRoutes(grant=>{
 
-    app.get(`/oauth/${grant.key}/init`, async (req, res)=>{
+    app.get(grant.initPath, async (req, res)=>{
         const { query } = req;
-        const redirect = await grant.getInitAuthURL({
-            state:query.state,
-            userId:query.userId
-        });
+        const redirect = await grant.getInitURL(query, { context:{ req, res } });
         res.redirect(redirect);
     });
 
-    app.get(`/oauth/${grant.key}/exit`, async (req, res)=> {
+    app.get(grant.exitPath, async (req, res)=> {
         const { query } = req;
-        const redirect = await grant.getExitAuthURL(query, { req, res });
+        const redirect = await grant.getExitURL(query, { context:{ req, res } });
         res.redirect(redirect);
     });
 
