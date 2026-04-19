@@ -1,6 +1,6 @@
 {
   "name": "@randajan/oauth2-client",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "description": "Lightweight framework-agnostic Node.js library for redirect-based OAuth 2.0 flows across multiple providers, including Google, Facebook, Seznam and magic-link authentication",
   "repository": "randajan/oauth2-client",
   "type": "module",
