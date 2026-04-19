@@ -1,6 +1,7 @@
 import { solids } from "@randajan/props";
 import { RedirectError } from "../errors";
-import { extendURL, objFromSignedBase64Url, objToSignedBase64Url, validateFn, validateObj, validateStr, validateURL, wrapValidatorURL } from "../tools";
+import { extendURL, validateFn, validateObj, validateStr, validateURL, wrapValidatorURL } from "../tools";
+import { objFromSignedBase64Url, objToSignedBase64Url } from "../crypto";
 import { Account } from "./Account";
 import { Client } from "./Client";
 

@@ -1,6 +1,7 @@
 import { randomBytes } from "crypto";
 import { RedirectError } from "../errors";
-import { extendURL, isValidURL, objFromSignedBase64Url, objToSignedBase64Url, validateFn, validateTtl, validateURL } from "../tools";
+import { extendURL, isValidURL, validateFn, validateTtl, validateURL } from "../tools";
+import { objFromSignedBase64Url, objToSignedBase64Url } from "../crypto";
 import { Grant } from "../class/Grant";
 import { MagicAccount } from "./MagicAccount";
 import { solids } from "@randajan/props";
