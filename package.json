@@ -11,6 +11,10 @@
       "import": "./dist/esm/index.mjs",
       "require": "./dist/cjs/index.cjs"
     },
+    "./tools": {
+      "import": "./dist/esm/tools.mjs",
+      "require": "./dist/cjs/tools.cjs"
+    },
     "./google": {
       "import": "./dist/esm/google/index.mjs",
       "require": "./dist/cjs/google/index.cjs"

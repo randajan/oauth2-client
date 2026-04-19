@@ -23,6 +23,7 @@ slib(
         lib:{
             entries:[
                 "index.js",
+                "tools.js",
                 "google/index.js",
                 "facebook/index.js",
                 "seznam/index.js",
