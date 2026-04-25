@@ -61,8 +61,8 @@ const google = createGoogleOAuth2({
   onRenew: async (account) => {
     console.log("tokens renewed for", account.grant.key);
   },
-  onError: (err, { errorCode, isRedirectError, options }) => {
-    console.warn("oauth error", errorCode, isRedirectError, err.message, options.context?.req?.ip);
+  onError: (err, options) => {
+    console.warn("oauth error", err.code, err.isKnown, err.message, options.context?.req?.ip);
   }
 });
 
@@ -113,8 +113,8 @@ const oauth = new Client(
     onRenew: async (account) => {
       console.log("renew", grantKey, await account.tokens());
     },
-    onError: (err, { errorCode }) => {
-      console.warn("oauth error", grantKey, errorCode, err.message);
+    onError: (err) => {
+      console.warn("oauth error", grantKey, err.code, err.message);
     },
     onMagic: async (confirmUrl, { userId }) => {
       console.log(`magic link for ${grantKey}/${userId}: ${confirmUrl}`);
@@ -222,7 +222,7 @@ All grants share the same base options. Scoped grants also accept `scopes`.
 | `formatProfile` | `(profile) => any` | no | Final profile mapper used by `account.profile()`. |
 | `onAuth` | `(account, { options, landingUri, state }) => string \| void \| Promise<string \| void>` | yes | Called after successful code exchange. Return a custom redirect URL or nothing to use `landingUri`. |
 | `onRenew` | `(account) => void \| Promise<void>` | yes | Called when provider credentials are refreshed. |
-| `onError` | `(err, { options, errorCode, isRedirectError }) => any` | no | Optional best-effort logging hook used before failure redirect is returned. Sync errors are swallowed. Returned promises are not awaited. |
+| `onError` | `(err, options) => any` | no | Optional error hook called with wrapped `Error` (`err.cause` keeps the original error, `err.code` is redirect code, `err.isKnown` marks `RedirectError`). Errors thrown by this hook are swallowed. |
 | `extra` | `object` | no | Provider-specific constructor extras. For example Google passes them into `google.auth.OAuth2(...)`. |
 | `scopes` | `string \| string[]` | scoped grants only | Default extra scopes for Google, Facebook and Seznam. |
 
@@ -243,6 +243,7 @@ Trusted init `options`:
 | `context` | `any` | Arbitrary server-side metadata passed into hooks via `meta.options.context`. Typical value is `{ req, res }`. |
 | `extra` | `object` | Provider-specific auth-request extras. This is intentionally server-side only. |
 | `scopes` | `string \| string[]` | Extra scopes for scoped grants. This is intentionally server-side only. |
+| `throwError` | `boolean` | If `true`, `getInitURL(...)` throws wrapped error instead of returning `failureUri`. |
 
 This split is important:
 
@@ -264,6 +265,7 @@ Trusted exit `options`:
 | Option | Type | Description |
 | --- | --- | --- |
 | `context` | `any` | Arbitrary server-side metadata passed into hooks via `meta.options.context`. Typical value is `{ req, res }`. |
+| `throwError` | `boolean` | If `true`, `getExitURL(...)` throws wrapped error instead of returning `failureUri`. |
 
 Exit flow:
 
@@ -275,15 +277,24 @@ Exit flow:
 
 ### Error behavior
 
-`grant.getInitURL(...)` and `grant.getExitURL(...)` do not throw for normal redirect-flow errors. They return `failureUri` with appended query parameters:
+`grant.getInitURL(...)` and `grant.getExitURL(...)` return `failureUri` for normal redirect-flow errors, unless `options.throwError === true`.
+
+Before redirect/throw, the original error is wrapped into a new `Error`:
+
+- `err.message`: public message (`RedirectError.message` or `"Unknown error"`)
+- `err.code`: three-digit redirect code
+- `err.isKnown`: `true` when original error is `RedirectError`
+- `err.cause`: original error object
+
+When `throwError` is not enabled, returned `failureUri` has appended query parameters:
 
 - `errorCode`
 - `errorMessage`
 
-If `onError` is configured, it is invoked before the failure redirect is returned. The hook is best-effort only:
+If `onError` is configured, it is invoked with wrapped error before redirect/throw. The hook is best-effort only:
 
 - sync errors inside `onError` are ignored
-- if `onError` returns a promise, it is not awaited
+- async errors inside `onError` are ignored
 - `onError` must not be used for flow control
 
 Errors outside redirect flow can still throw normally. Example: `grant.account(credentials)`, `account.profile()`, `account.tokens()` or provider SDK calls you make yourself.
@@ -308,9 +319,9 @@ onAuth: async (account, { options, landingUri, state }) => {
   return landingUri;
 },
 
-onError: (err, { options, errorCode }) => {
+onError: (err, options) => {
   const ip = options.context?.req?.ip;
-  console.error(errorCode, ip, err.message);
+  console.error(err.code, ip, err.message);
 }
 ```
 

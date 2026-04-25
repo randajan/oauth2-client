@@ -10,12 +10,12 @@ export class Grant {
 
     static isClass(Class) { return typeof Class === "function" && (Class === Grant || Class.prototype instanceof Grant); }
 
-    static name="";
+    static name = "";
     static reqClientId = true;
     static reqClientSecret = true;
     static Account = Account;
 
-    constructor(opt={}) {
+    constructor(opt = {}) {
         const { name, reqClientId, reqClientSecret, Account } = this.constructor;
         const { client, key } = opt;
 
@@ -36,21 +36,21 @@ export class Grant {
             client,
             Account,
             name,
-            key:validateStr(false, key, "options.key") || name,
-            isOffline:!!opt.isOffline,
+            key: validateStr(false, key, "options.key") || name,
+            isOffline: !!opt.isOffline,
             clientId: validateStr(reqClientId, opt.clientId, "options.clientId"),
             clientSecret: validateStr(reqClientSecret, opt.clientSecret, "options.clientSecret"),
             initUri,
             exitUri,
-            initPath:new URL(initUri).pathname,
-            exitPath:new URL(exitUri).pathname,
+            initPath: new URL(initUri).pathname,
+            exitPath: new URL(exitUri).pathname,
             failureUri: validateURL(true, opt.failureUri, "options.failureUri"),
             landingUri,
-            landingUriValidator: wrapValidatorURL(landingUriValidator || (uri=>(uri === landingUri))),
-            formatProfile: validateFn(false, opt.formatProfile, "options.formatProfile") || (p=>p),
+            landingUriValidator: wrapValidatorURL(landingUriValidator || (uri => (uri === landingUri))),
+            formatProfile: validateFn(false, opt.formatProfile, "options.formatProfile") || (p => p),
             onAuth: validateFn(true, opt.onAuth, "options.onAuth"),
             onRenew: validateFn(true, opt.onRenew, "options.onRenew"),
-            onError: validateFn(false, opt.onError, "options.onError") || (()=>{}),
+            onError: validateFn(false, opt.onError, "options.onError") || (() => { }),
             extra: Object.freeze(validateObj(false, opt.extra, "options.extra") || {}),
         });
 
@@ -60,35 +60,31 @@ export class Grant {
 
     }
 
+    async _interceptError(majorCode, err, options = {}) {
+        const isKnown = RedirectError.is(err);
+        const code = majorCode * 100 + (isKnown ? err.code : 0);
+        const message = isKnown ? err.message : "Unknown error";
 
+        const wrap = new Error(message, { cause:err });
+        solids(wrap, { code, isKnown });
 
-    _handleError(majorCode, err, options={}) {
-        const { onError } = this;
-
-        const isKnownError = RedirectError.is(err);
-        const errorCode = majorCode * 100 + (isKnownError ? err.code : 0);
-        const publicMessage = isKnownError ? err.message : "Unknown error";
-
-        try {
-
-            const handler = onError(err, {
-                options,
-                errorCode,
-                isKnownError,
-                publicMessage
-            });
-
-            if (handler instanceof Promise) { handler.catch(()=>{}); }
-        } catch {}
-
-        return this._generateFallbackUrl(errorCode, publicMessage);
+        try { await this.onError(wrap, options); } catch { }
+        return wrap;
     }
 
-    _generateFallbackUrl(errorCode, errorMessage) {
-        return extendURL(this.failureUri, {errorCode, errorMessage});
+    async _handleError(majorCode, err, options = {}) {
+        const wrap = await this._interceptError(majorCode, err, options);
+
+        if (options.throwError) { throw wrap; }
+        
+        return this._generateFailureUrl(wrap.code, wrap.message);
     }
 
-    _generateAuthUrl(signedState, extra={}) {
+    _generateFailureUrl(errorCode, errorMessage) {
+        return extendURL(this.failureUri, { errorCode, errorMessage });
+    }
+
+    _generateAuthUrl(signedState, extra = {}) {
 
     }
     _signState(stateObject, landingUri) {
@@ -96,7 +92,7 @@ export class Grant {
         if (!this.landingUriValidator(landingUri, this.landingUri)) {
             throw new RedirectError(1, "Bad request. Invalid 'landingUri'");
         }
-        return objToSignedBase64Url([ landingUri, stateObject ], this.clientSecret);
+        return objToSignedBase64Url([landingUri, stateObject], this.clientSecret);
     }
 
     _readState(state) {
@@ -112,13 +108,13 @@ export class Grant {
             throw new RedirectError(2, "Bad request. Invalid 'state'");
         }
 
-        const [ landingUri, stateObject ] = payload;
+        const [landingUri, stateObject] = payload;
 
         if (!this.landingUriValidator(landingUri, this.landingUri)) {
             throw new RedirectError(1, "Bad request. Invalid 'landingUri'");
         }
 
-        return [ landingUri, stateObject ];
+        return [landingUri, stateObject];
     }
 
     async _swapCodeForTokens(code) {
@@ -136,12 +132,12 @@ export class Grant {
         const { code, state } = query;
         if (!code) { throw new RedirectError(4, "Bad request. Missing 'code'"); }
 
-        const [ landingUri, unsignedState ] = this._readState(state);
+        const [landingUri, unsignedState] = this._readState(state);
         const tokens = await this._swapCodeForTokens(code);
         const account = this.account(tokens);
 
 
-        const customUri = await this.onAuth(account, { options, landingUri, state:unsignedState });
+        const customUri = await this.onAuth(account, { options, landingUri, state: unsignedState });
         return customUri || landingUri;
     }
 

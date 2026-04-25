@@ -27,8 +27,8 @@ const oauth = new Client(
         onRenew: async (account) => {
 
         },
-        onError: async (err, { errorCode })=>{
-            console.log("OAUTH ERROR", errorCode);
+        onError: async (err)=>{
+            console.log("OAUTH ERROR", err.code);
         }
     })
 );
